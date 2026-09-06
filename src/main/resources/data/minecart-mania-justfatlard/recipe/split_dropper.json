@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecart-mania-justfatlard:dropper_minecart"
+  ],
+  "result": {
+    "id": "minecraft:dropper"
+  }
+}

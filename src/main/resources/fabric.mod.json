@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "minecart-mania-justfatlard",
+  "version": "${version}",
+  "name": "Minecart Mania",
+  "description": "Faster rails, a handbrake, chained carts, working carts that lay track and dig, and rails that switch themselves",
+  "authors": [
+    "justfatlard"
+  ],
+  "contact": {
+    "sources": "https://github.com/fatlard1993/minecart-mania"
+  },
+  "license": "MIT",
+  "icon": "assets/minecart-mania-justfatlard/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "justfatlard.minecart_mania.Main"
+    ]
+  },
+  "mixins": [
+    "minecart-mania-justfatlard.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loaderVersion}",
+    "fabric-api": "${fabricApiVersion}",
+    "minecraft": "${minecraftDependency}",
+    "java": ">=25",
+    "pandorical": "*"
+  }
+}

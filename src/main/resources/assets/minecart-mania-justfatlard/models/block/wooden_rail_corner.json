@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/rail_curved",
+  "textures": {
+    "rail": "minecart-mania-justfatlard:block/wooden_rail"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "stem=north,left=true": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_left"
+    },
+    "stem=north,left=false": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_right"
+    },
+    "stem=east,left=true": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_left",
+      "y": 90
+    },
+    "stem=east,left=false": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_right",
+      "y": 90
+    },
+    "stem=south,left=true": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_left",
+      "y": 180
+    },
+    "stem=south,left=false": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_right",
+      "y": 180
+    },
+    "stem=west,left=true": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_left",
+      "y": 270
+    },
+    "stem=west,left=false": {
+      "model": "minecart-mania-justfatlard:block/tee_rail_right",
+      "y": 270
+    }
+  }
+}

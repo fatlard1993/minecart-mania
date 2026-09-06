@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "shape=north_south": {
+      "model": "minecart-mania-justfatlard:block/cross_rail"
+    },
+    "shape=east_west": {
+      "model": "minecart-mania-justfatlard:block/cross_rail"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "package": "justfatlard.minecart_mania.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "MinecartImprovementsMixin",
+    "RailSpeedMixin",
+    "RailSupportMixin",
+    "RailPinMixin",
+    "MinecartTickMixin",
+    "CartPushMixin",
+    "MinecartFurnaceMixin",
+    "ActivatorRailMixin",
+    "MinecartTntMixin",
+    "CraftingRemainderMixin",
+    "LobbedTntMixin",
+    "ContainerCartMixin",
+    "ChainPushMixin",
+    "ChainBreakMixin",
+    "WorkingCartDropMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

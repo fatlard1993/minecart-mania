@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipes": "minecart-mania-justfatlard:split_tnt"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_tnt_minecart": {
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:tnt_minecart"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_tnt_minecart"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "minecart-mania-justfatlard:split_tnt"
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "R": "minecraft:rail",
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "RRR",
+    " I ",
+    " R "
+  ],
+  "result": {
+    "count": 2,
+    "id": "minecart-mania-justfatlard:tee_rail"
+  }
+}
