@@ -46,7 +46,7 @@ public abstract class LobbedTntMixin {
 				return false;
 			}
 		};
-		level.explode(tnt, Explosion.getDefaultDamageSource(level, tnt), charge, tnt.position(), 4.0F, false, Level.ExplosionInteraction.BLOCK);
+		level.explode(tnt, Explosion.getDefaultDamageSource(level, tnt), charge, tnt.position(), 4.0F, false, Level.ExplosionInteraction.TNT);
 		tnt.discard();
 		ci.cancel();
 	}

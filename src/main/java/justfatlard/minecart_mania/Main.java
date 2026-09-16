@@ -87,6 +87,7 @@ public class Main implements ModInitializer {
 		ChainLinks.register();
 		FurnaceControls.register();
 		WorkingCarts.register();
+		justfatlard.minecart_mania.cart.DirectionMarkers.register();
 		if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("block-tip")) {
 			justfatlard.minecart_mania.integration.WorkingCartTips.register();
 		}

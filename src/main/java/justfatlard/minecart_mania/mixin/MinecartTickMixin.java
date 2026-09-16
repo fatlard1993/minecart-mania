@@ -20,5 +20,6 @@ public abstract class MinecartTickMixin {
 		Handbrake.tick(cart);
 		ChainLinks.tick(cart);
 		WorkingCarts.tick(cart);
+		justfatlard.minecart_mania.cart.DirectionMarkers.tick(cart);
 	}
 }

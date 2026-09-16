@@ -27,8 +27,8 @@ import net.minecraft.world.phys.Vec3;
 public final class Handbrake {
 	private Handbrake() {}
 
-	/** Pandorical's pooled key token for B; G is 10 and belongs to the companions' whistle. */
-	private static final int KEY_B = 11;
+	/** Pandorical's second pool slot starts on B; naming it claims that slot. */
+	private static final int KEY_B = KeybindApi.letter('B');
 	/** Speed kept per tick while braking: to a halt from a full gold line in about a second and a half. */
 	private static final double DRAG = 0.86;
 	private static final double SPARKS_ABOVE = 2.0;

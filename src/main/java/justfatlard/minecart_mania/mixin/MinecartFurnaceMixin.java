@@ -67,6 +67,19 @@ public abstract class MinecartFurnaceMixin implements FurnaceFuel {
 		cir.setReturnValue(true);
 	}
 
+	/**
+	 * Fuel by hand does not turn the cart. Vanilla pushes a fed cart away from whoever fed it,
+	 * which was the only way to point one; the arrow over the cart is the way it points now,
+	 * and the fire only lights what the arrow says.
+	 */
+	@Inject(method = "addFuel", at = @At("RETURN"))
+	private void minecartMania$keepHeading(Vec3 interactingPos, ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
+		if (!cir.getReturnValueZ()) return;
+		MinecartFurnace cart = (MinecartFurnace) (Object) this;
+		if (cart.level().isClientSide()) return;
+		push = FurnaceControls.pushOf(cart);
+	}
+
 	@Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
 	private void minecartMania$throttle(ServerLevel level, CallbackInfoReturnable<Double> cir) {
 		cir.setReturnValue(FurnaceControls.maxSpeedFor((MinecartFurnace) (Object) this));

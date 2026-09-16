@@ -67,8 +67,15 @@ public final class ChainLinks {
 	 * curve had them a good way through each other before the push took hold.
 	 */
 	static final double REST = 1.45;
-	private static final double SLACK = 1.25;
 	static final double STRETCHED = REST + 0.35;
+	/**
+	 * How far off REST the pair may ride before the link takes hold: a chain's few links of
+	 * play, not a spring's. Past it the gap is closed hard, half of what is left every tick.
+	 */
+	private static final double GIVE = 0.05;
+	private static final double RESTORE = 0.5;
+	/** The most closing speed the link puts on a pair in one tick, so a chain hauls and does not fling. */
+	private static final double FIX_MOST = 0.25;
 	/**
 	 * A cart with a chain held to it and nothing yet on the other end is on a leash: it comes
 	 * along after the hand holding the chain, slowly, once the chain is out to its length. The
@@ -78,16 +85,8 @@ public final class ChainLinks {
 	private static final double LEASH_PULL = 0.015;
 	private static final double LEASH_PACE = 0.1;
 	private static final double LEASH_SLIPS = 32.0;
-	private static final double PULL = 0.12;
-	/**
-	 * The most a chain adds to a cart's speed in one tick, whatever the gap. The spring alone
-	 * gave a cart chained from five blocks off half a block a tick, which is a cart thrown at a
-	 * wall; a TNT cart thrown at a wall goes off, and one did. A chain hauls, it does not fling.
-	 */
-	private static final double PULL_MOST = 0.04;
 	/** How fast the second cart may close on the first when the chain is first put on. */
 	private static final double SNAP_MOST = 0.12;
-	private static final double BLEND = 0.15;
 	private static final double REACH = 16.0;
 
 	public static void register() {
@@ -182,7 +181,8 @@ public final class ChainLinks {
 				|| linksOf(head).size() >= LINKS_MOST || linked(head, cart) || head.distanceTo(cart) > REACH) {
 			if (first != null && !first.equals(cart.getUUID())) ChainVisual.removeLeash(first);
 			pending.put(player.getUUID(), cart.getUUID());
-			player.sendOverlayMessage(Component.literal("Chain held to this cart - click the next, or lead it"));
+			player.sendOverlayMessage(Component.translatableWithFallback("minecart-mania-justfatlard.chain.held",
+				"Chain held to this cart - click the next, or lead it"));
 			return InteractionResult.SUCCESS;
 		}
 
@@ -226,6 +226,11 @@ public final class ChainLinks {
 	}
 
 	/** A chained cart is being destroyed: the pair parts and the chain drops where it was. */
+	/** Part these two, and this pair only. */
+	public static void unlinkPair(ServerLevel level, AbstractMinecart cart, UUID other, boolean dropChain) {
+		if (linksOf(cart).contains(other)) unlinkOne(level, cart, other, dropChain);
+	}
+
 	public static void broken(ServerLevel level, AbstractMinecart cart) {
 		if (!linksOf(cart).isEmpty()) unlink(level, cart, true);
 	}
@@ -252,18 +257,21 @@ public final class ChainLinks {
 				unlinkOne(level, cart, partnerId, true);
 				continue;
 			}
+			// A rod, not a spring. Along the chain the two move at one speed, the mean of
+			// their own, and whatever the gap is off its length is closed on top of that. Across
+			// the chain each keeps its own way, which on a curve is its own rail. A spring with
+			// a soft pull and a wide dead band had them surging back and forth on every start
+			// and stop.
 			if (d > 1.0E-4) {
 				Vec3 dir = gap.scale(1.0 / d);
-				double error = d > REST ? d - REST : (d < SLACK ? d - SLACK : 0.0);
-				if (error != 0.0) {
-					Vec3 correction = dir.scale(Math.clamp(error * PULL, -PULL_MOST, PULL_MOST));
-					cart.setDeltaMovement(cart.getDeltaMovement().add(correction));
-					partner.setDeltaMovement(partner.getDeltaMovement().subtract(correction));
-				}
+				double error = Math.abs(d - REST) <= GIVE ? 0.0 : d - REST;
+				double along = cart.getDeltaMovement().dot(dir);
+				double partnerAlong = partner.getDeltaMovement().dot(dir);
+				double mean = (along + partnerAlong) / 2.0;
+				double fix = Math.clamp(error * RESTORE, -FIX_MOST, FIX_MOST);
+				cart.setDeltaMovement(cart.getDeltaMovement().add(dir.scale(mean + fix / 2.0 - along)));
+				partner.setDeltaMovement(partner.getDeltaMovement().add(dir.scale(mean - fix / 2.0 - partnerAlong)));
 			}
-			Vec3 mean = cart.getDeltaMovement().add(partner.getDeltaMovement()).scale(0.5);
-			cart.setDeltaMovement(cart.getDeltaMovement().lerp(mean, BLEND));
-			partner.setDeltaMovement(partner.getDeltaMovement().lerp(mean, BLEND));
 
 			ChainVisual.update(cart, partner, d);
 		}

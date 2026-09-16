@@ -54,16 +54,17 @@ the cart still takes the steps. Where a diagonal meets a straight the two share 
 each block, so both rails swing round together. A curve on its own between two straights is a
 corner and keeps its bend.
 
-**Recipes give twice vanilla's count**: thirty-two rails, twelve of each powered kind, two carts.
-Wooden rails are planks around a stick; copper powered rails are waxed copper blocks around a
-stick and redstone. The crossing is four rails around an iron ingot; the junction is three
-rails over an ingot over a rail.
+**Recipes give twice vanilla's count**: thirty-two rails, twelve each of powered, detector and
+activator rails, two carts. Wooden rails are thirty-two from planks around a stick; copper
+powered rails are twelve from waxed copper blocks around a stick and redstone. The crossing is
+four rails around an iron ingot; the junction is three rails over an ingot over a rail; each
+makes two.
 
 ## Carts
 
-**Speed hurts.** Above walking pace a cart hurts and throws whatever stands in its way, harder
-the faster it goes, and past sixteen metres a second it keeps every bit of its momentum: a
-cart on a gold line does not notice a zombie.
+**Speed hurts.** Above six metres a second a cart hurts and throws whatever stands in its way,
+harder the faster it goes, and past sixteen metres a second it keeps every bit of its momentum:
+a cart on a gold line does not notice a zombie.
 
 **The handbrake.** Hold the Minecart Handbrake key, B by default, while riding, and the cart
 sheds speed until you let go, sparking and grinding as it does. Pandorical carries the key; a
@@ -81,21 +82,41 @@ cart with a chain and it comes free of everything it was chained to, the chains 
 your feet; break a chained cart and its chains drop with it.
 
 **The furnace cart** has controls: an empty hand on it opens a panel with a four-notch
-throttle, a reverser and a switch. Notch four is the full pace of the rail it is on, where
-vanilla's furnace cart managed three quarters of a plain cart; each notch below takes a quarter
-off, and each notch above one burns fuel that much faster. A powered activator rail throws the
-switch, so a station can stop a train and start it again. The panel has a fuel slot under a
-furnace's flame: what is put in the slot stays there, and the cart takes one from it when the
-fire goes out and it is running, never while it is stopped. Anything a furnace burns will do,
-there or fed by hand into the cart's side, for the time it would burn in a furnace; vanilla took
-coal and nothing else.
+throttle, a Turn around button and a switch that reads Running or Stopped. Notch four is the
+full pace of the rail it is on, where vanilla's furnace cart managed three quarters of a plain
+cart; each notch below takes a quarter off, and each notch above one burns fuel that much
+faster. Turn around flips the cart on the spot, push and motion both, and the panel shows the
+compass heading it is going or facing and how long its fire has left. A powered activator rail
+throws the switch, so a station can stop a train and start it again. The panel has a fuel slot
+under a furnace's flame: what is put in the slot stays there, and the cart takes one from it
+when the fire goes out and it is running, never while it is stopped. Anything a furnace burns
+will do, there or fed by hand, for the time it would burn in a furnace scaled the way vanilla
+scales coal for a cart; vanilla took coal and nothing else. Feeding it by hand no longer turns
+it: a furnace cart pushes the way its arrow points.
+
+**Arrows.** An arrow lies flat over every furnace cart and working cart: the furnace's points
+the way it pushes, a dropper's or dispenser's the way it lays or throws, so a train reads at a
+glance. It is an item display riding the cart, so vanilla clients see it too. A cart set down by
+a player faces the way they are looking, along the rail.
+
+**The working carts** are a dropper or a dispenser put together with a minecart on the crafting
+grid, and are set on a rail like any cart. The panel sets the side, front, back, left or right,
+and how often, every one to sixty-four blocks of travel, counted by where the cart stands and not
+by speed, so a parked cart jostled by its chain stays put. A new dropper cart works forward every
+block, a new dispenser cart forward every four. With block-tip installed, its tip names them as
+what they are rather than as chest carts.
 
 **The dropper cart** lays what it carries. A dropper in a cart holds twenty-seven slots and,
 every so many blocks of travel, places one of the first thing in them to its front, back, left
-or right. Forward is the interesting one: rails laid one block ahead of a moving cart are a
-track that builds itself; a torch to the left every eight blocks is a lit tunnel. Right-click
-it for the slots and the controls; sneak-click for the bare chest. Break it and it comes back
-as itself.
+or right; a thing that is not a block is dropped there instead. Forward is the interesting one:
+rails laid one block ahead of a moving cart are a track that builds itself; a torch to the left
+every eight blocks is a lit tunnel. Laid rail keeps its line: a level run spans a drop, a
+falling run keeps falling, a climb goes on while there is ground to climb and levels off onto
+the plateau when there is not, and a wall ahead with room over it starts one. Track already
+there is driven over, not built on, a curve underfoot followed round, and a rail cart anywhere
+in a train looks past the carts ahead of it, up to eight blocks, for where the line ends.
+Right-click it for the slots and the controls; sneak-click for the bare chest. Break it and it
+comes back as itself.
 
 **The dispenser cart** throws what it carries, every so many blocks of travel, in one of the
 four directions. What it throws best is TNT: lobbed ahead and up, lit short, and burst as a
@@ -109,7 +130,18 @@ stops where it is, tips its nose down over the fuse, and then
 puts the whole charge forward: a tunnel three wide, three high and up to sixteen long from the
 rail it stopped on, floor kept, every block dropped, nothing standing near it hurt. How long is
 how fast it was going when it was lit: the full sixteen at the pace of the rail under it, two
-blocks from a standstill. The cart is spent, bar a few iron nuggets on the floor.
+blocks from a standstill. The cart is spent, bar a handful of iron nuggets on the floor.
+
+**A TNT train** sent over a powered activator rail goes off as one charge. Up to six TNT carts
+answer, the chain walked from the lead and stopping at the first cart that is not TNT; how many
+of those come depends on the pace they arrived at, from the lead alone at a crawl to all six at
+the rail's full speed. The rest of the train is unhooked and stops where it stands, and a
+furnace cart pushing it is set to Stopped. Each cart in the volley is flung to a spot of its own
+against the face, nose to the face, and they go off together on the lead's fuse: the bore is a
+block wider and higher and four deeper for each cart past the first, up to six wide, then eight
+deeper for each cart after that, the floor kept. The leavings are pooled, the chains between the carts going in
+as a nugget or two each, and some are forged back into ingots: one per cart past the first,
+and as many again on a good roll.
 
 **Carts come apart.** Any cart with a block in it splits on the crafting grid: the block is the
 result and the bare cart comes back as the crafting remainder, the way a bucket does. That
@@ -127,7 +159,8 @@ floor the server holds you up with.
 ## Pandorical
 
 Minecart Mania registers its rails and carts through Pandorical's content sync, draws the
-chain through it, takes the handbrake key from it, and tells it rails are solid.
+chain through it, takes the handbrake key from it, builds the furnace and working cart panels
+with it, and tells it rails are solid. **Pandorical is required on the server.**
 
 **The Pandorical mod must be installed client-side** for the rails and carts to look like
 themselves, for the handbrake and the chain. Without it the mod still works

@@ -30,6 +30,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -100,10 +101,14 @@ public final class FurnaceControls {
 			screens.onAction(SCREEN, "notch" + level, (player, data) -> with(player, (cart, s) -> new Settings(notch, s.on(), s.reversed())));
 		}
 		screens.onAction(SCREEN, "reverse", (player, data) -> with(player, (cart, s) -> {
-			// The stored way turns too, or a stopped cart reversed would set off the old way.
+			// Turned round on the spot: the push, the stored way, and the motion itself. Flipping
+			// the push alone left the cart coasting on for a while against it, and a panel that
+			// said "Reversed" over a cart still going the old way was the whole complaint. The
+			// stored way turns too, or a stopped cart set going again would set off the old way.
 			Vec3 dir = cart.getAttached(PUSH_DIR);
 			if (dir != null) cart.setAttached(PUSH_DIR, dir.scale(-1.0));
 			cart.push = cart.push.scale(-1.0);
+			cart.setDeltaMovement(cart.getDeltaMovement().scale(-1.0));
 			return new Settings(s.level(), s.on(), !s.reversed());
 		}));
 		screens.onAction(SCREEN, "toggle", (player, data) -> with(player, (cart, s) -> new Settings(s.level(), !s.on(), s.reversed())));
@@ -178,8 +183,13 @@ public final class FurnaceControls {
 		return true;
 	}
 
+	/** The way the cart will push from now on: set when it is placed, or turned round. */
+	public static void setHeading(MinecartFurnace cart, Direction heading) {
+		cart.setAttached(PUSH_DIR, Vec3.atLowerCornerOf(heading.getUnitVec3i()));
+	}
+
 	/** The way the cart is pushed: the way it was last going, or the way it points if it never went. */
-	private static Vec3 pushOf(MinecartFurnace cart) {
+	public static Vec3 pushOf(MinecartFurnace cart) {
 		Vec3 dir = cart.getAttached(PUSH_DIR);
 		return dir != null ? dir : Vec3.atLowerCornerOf(Headings.of(cart).getUnitVec3i());
 	}
@@ -200,6 +210,18 @@ public final class FurnaceControls {
 			"texture_v", String.valueOf(FLAME - height));
 	}
 
+	/**
+	 * Which way the cart is going, as a compass point. A furnace cart is the same shape both
+	 * ways round, so "forward" is not a thing it has; the panel used to say Forward or Reversed
+	 * and the word came adrift from the cart the first time anything else turned it.
+	 */
+	private static String headingText(MinecartFurnace cart) {
+		Direction heading = Headings.of(cart);
+		boolean moving = cart.getDeltaMovement().horizontalDistanceSqr() > 1.0E-4;
+		String name = Character.toUpperCase(heading.getName().charAt(0)) + heading.getName().substring(1);
+		return (moving ? "Heading " : "Facing ") + name;
+	}
+
 	private static String fireText(MinecartFurnace cart) {
 		int fuel = cart instanceof FurnaceFuel fire ? fire.minecartMania$fuel() : 0;
 		return fuel <= 0 ? "Fire out" : "Fire " + (fuel / 20 / 60) + ":" + String.format("%02d", fuel / 20 % 60);
@@ -212,7 +234,8 @@ public final class FurnaceControls {
 			if (!(level.getServer().getPlayerList().getPlayer(watching.getKey()) instanceof ServerPlayer player)) continue;
 			PandoricalApi.screens().update(player, SCREEN, List.of(
 				new ComponentUpdate("flame", flameProps(flameHeight(cart))),
-				new ComponentUpdate("fuel", Map.of("text", fireText(cart)))));
+				new ComponentUpdate("fuel", Map.of("text", fireText(cart))),
+				new ComponentUpdate("heading", Map.of("text", headingText(cart)))));
 		}
 	}
 
@@ -235,7 +258,7 @@ public final class FurnaceControls {
 		for (int level = 1; level <= 4; level++) {
 			updates.add(new ComponentUpdate("notch" + level, Map.of(ComponentType.PROP_STYLE, level == s.level() ? "accepted" : "default")));
 		}
-		updates.add(new ComponentUpdate("reverse", Map.of(ComponentType.PROP_LABEL, s.reversed() ? "Reversed" : "Forward")));
+		updates.add(new ComponentUpdate("heading", Map.of("text", headingText(cart))));
 		updates.add(new ComponentUpdate("toggle", Map.of(
 			ComponentType.PROP_LABEL, s.on() ? "Running" : "Stopped",
 			ComponentType.PROP_STYLE, s.on() ? "accepted" : "default")));
@@ -249,7 +272,9 @@ public final class FurnaceControls {
 		int width = 176;
 		int packY = 100;
 		int height = packY + 3 * 18 + 4 + 18 + 8;
-		ScreenBuilder screen = new ScreenBuilder(SCREEN).container(1, true).size(width, height).pauseGame(false);
+		// The id is what the client matches a redraw against, and the builder mints its own
+		// unless told; addressed by type, every press was applied and never drawn.
+		ScreenBuilder screen = new ScreenBuilder(SCREEN).id(SCREEN).container(1, true).size(width, height).pauseGame(false);
 		screen.panel("bg", 0, 0, width, height, Map.of("border", "beveled"));
 		screen.text("title", 8, 6, Map.of("text", "Furnace Cart", "color", "#404040"));
 		screen.text("throttle", 8, 22, Map.of("text", "Speed", "color", "#404040"));
@@ -258,11 +283,12 @@ public final class FurnaceControls {
 				ComponentType.PROP_LABEL, String.valueOf(level),
 				ComponentType.PROP_STYLE, level == s.level() ? "accepted" : "default"));
 		}
-		screen.button("reverse", 8, 40, 62, 18, Map.of(ComponentType.PROP_LABEL, s.reversed() ? "Reversed" : "Forward"));
+		screen.button("reverse", 8, 40, 62, 18, Map.of(ComponentType.PROP_LABEL, "Turn around"));
 		screen.button("toggle", 80, 40, 62, 18, Map.of(
 			ComponentType.PROP_LABEL, s.on() ? "Running" : "Stopped",
 			ComponentType.PROP_STYLE, s.on() ? "accepted" : "default"));
-		screen.text("fuel", 8, 70, Map.of("text", fireText(cart), "color", "#404040"));
+		screen.text("heading", 8, 62, Map.of("text", headingText(cart), "color", "#404040"));
+		screen.text("fuel", 8, 74, Map.of("text", fireText(cart), "color", "#404040"));
 		// The furnace's own flame: the unlit outline from its screen, the lit one over it.
 		screen.sprite("flame_bg", FLAME_X, FLAME_Y, FLAME, FLAME, Map.of(
 			"texture", "minecraft:textures/gui/container/furnace.png",

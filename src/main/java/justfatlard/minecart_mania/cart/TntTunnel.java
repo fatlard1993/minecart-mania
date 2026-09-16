@@ -2,7 +2,9 @@ package justfatlard.minecart_mania.cart;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -36,22 +38,55 @@ public final class TntTunnel {
 	/** Anything that a pickaxe would never take: bedrock, the world border, end portal frames. */
 	private static final float UNBREAKABLE = -1.0F;
 
-	/** Nuggets left of the cart, at least and at most. A cart is five ingots; most of it is gone. */
-	private static final int NUGGETS_LEAST = 3;
-	private static final int NUGGETS_MOST = 7;
+	/** Nuggets left of the cart, at least and at most. A cart is five ingots, forty-five nuggets; most of it is gone. */
+	public static final int NUGGETS_LEAST = 8;
+	public static final int NUGGETS_MOST = 14;
 
 	/**
 	 * @param share how much of the rail's full pace the cart had when it was lit, nought to one
 	 */
 	public static void bore(MinecartTNT cart, Direction heading, double share) {
+		bore(cart, heading, share, 1);
+	}
+
+	/** The widest a volley bores; past this every extra cart goes into depth instead. */
+	private static final int WIDEST = 6;
+	private static final int DEPTH_PER_CART = 4;
+	private static final int DEPTH_PER_CART_PAST_WIDEST = 8;
+
+	/**
+	 * How wide a charge of this many carts bores: three for one, a block more for each more,
+	 * to six. The bore is as high as it is wide, from the rail up - the floor is never touched.
+	 */
+	public static int widthOf(int carts) {
+		return Math.min(WIDEST, 2 + Math.max(1, carts));
+	}
+
+	/** How deep, at the rail's full pace: sixteen for one, four more per cart, eight more once the bore is as wide as it gets. */
+	public static int depthOf(int carts) {
+		int extra = Math.max(0, carts - 1);
+		int widening = Math.min(extra, WIDEST - 3);
+		return LENGTH + widening * DEPTH_PER_CART + (extra - widening) * DEPTH_PER_CART_PAST_WIDEST;
+	}
+
+	/**
+	 * @param share how much of the rail's full pace the cart had when it was lit, nought to one
+	 * @param carts how many carts make up the charge
+	 */
+	public static void bore(MinecartTNT cart, Direction heading, double share, int carts) {
 		if (!(cart.level() instanceof ServerLevel level)) return;
 		BlockPos origin = cart.getCurrentBlockPosOrRailBelow();
 		Direction side = heading.getClockWise();
-		int length = Math.max(LEAST, (int) Math.round(LENGTH * Math.clamp(share, 0.0, 1.0)));
+		int width = widthOf(carts);
+		int height = width;
+		// An even width has no middle: the extra column goes to the right of the rail.
+		int left = -((width - 1) / 2);
+		int right = width / 2;
+		int length = Math.max(LEAST, (int) Math.round(depthOf(carts) * Math.clamp(share, 0.0, 1.0)));
 		int cleared = 0;
 		for (int ahead = 1; ahead <= length; ahead++) {
-			for (int across = -HALF_WIDTH; across <= HALF_WIDTH; across++) {
-				for (int up = 0; up < HEIGHT; up++) {
+			for (int across = left; across <= right; across++) {
+				for (int up = 0; up < height; up++) {
 					BlockPos pos = origin.relative(heading, ahead).relative(side, across).above(up);
 					BlockState state = level.getBlockState(pos);
 					if (state.isAir() || state.getDestroySpeed(level, pos) == UNBREAKABLE) continue;
@@ -65,15 +100,32 @@ public final class TntTunnel {
 			}
 		}
 		level.playSound(null, origin, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0F, 0.8F);
-		int nuggets = NUGGETS_LEAST + level.getRandom().nextInt(NUGGETS_MOST - NUGGETS_LEAST + 1);
-		for (int i = 0; i < nuggets; i++) {
-			ItemEntity nugget = new ItemEntity(level, cart.getX(), cart.getY() + 0.3, cart.getZ(), new ItemStack(Items.IRON_NUGGET));
-			nugget.setDeltaMovement(
-				(level.getRandom().nextDouble() - 0.5) * 0.3,
-				0.2 + level.getRandom().nextDouble() * 0.2,
-				(level.getRandom().nextDouble() - 0.5) * 0.3);
-			level.addFreshEntity(nugget);
-		}
+		// A volley's leavings are pooled and dropped by the volley; a cart alone drops its own.
+		if (carts <= 1) spend(cart);
+		else cart.discard();
+	}
+
+	/** A cart that has gone off: what is left of it is a handful of iron nuggets on the floor. */
+	public static void spend(MinecartTNT cart) {
+		if (!(cart.level() instanceof ServerLevel level)) return;
+		scatter(level, cart.position(), Items.IRON_NUGGET, nuggetsOf(level));
 		cart.discard();
+	}
+
+	/** One cart's worth of nuggets. */
+	public static int nuggetsOf(ServerLevel level) {
+		return NUGGETS_LEAST + level.getRandom().nextInt(NUGGETS_MOST - NUGGETS_LEAST + 1);
+	}
+
+	/** So many of this, thrown loose about a spot. */
+	public static void scatter(ServerLevel level, Vec3 at, Item item, int count) {
+		for (int i = 0; i < count; i++) {
+			ItemEntity drop = new ItemEntity(level, at.x, at.y + 0.3, at.z, new ItemStack(item));
+			drop.setDeltaMovement(
+				(level.getRandom().nextDouble() - 0.5) * 0.4,
+				0.2 + level.getRandom().nextDouble() * 0.25,
+				(level.getRandom().nextDouble() - 0.5) * 0.4);
+			level.addFreshEntity(drop);
+		}
 	}
 }

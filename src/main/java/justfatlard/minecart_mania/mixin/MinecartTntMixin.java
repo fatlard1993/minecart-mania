@@ -35,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * the steps already going out, and into a step of its own when there were none.
  */
 @Mixin(MinecartTNT.class)
-public abstract class MinecartTntMixin {
+public abstract class MinecartTntMixin implements justfatlard.minecart_mania.cart.TntVolley.TntLit {
 	@Unique
 	private static final float TIP_DEGREES = 55.0F;
 	@Unique
@@ -67,6 +67,12 @@ public abstract class MinecartTntMixin {
 	@Unique
 	private static final double HALF_LENGTH = 0.5;
 
+	@Override
+	public void minecartMania$lightAs(Direction heading, double share) {
+		minecartMania$heading = heading;
+		minecartMania$share = share;
+	}
+
 	@Inject(method = "primeFuse", at = @At("HEAD"))
 	private void minecartMania$rememberHeading(DamageSource source, CallbackInfo ci) {
 		MinecartTNT cart = (MinecartTNT) (Object) this;
@@ -78,6 +84,8 @@ public abstract class MinecartTntMixin {
 		if (minecartMania$anchor == null && !cart.level().isClientSide()) {
 			minecartMania$anchor = cart.position();
 			cart.setDeltaMovement(Vec3.ZERO);
+			// The carts chained to this one come too, if it was going fast enough to bring them.
+			justfatlard.minecart_mania.cart.TntVolley.onPrimed(cart, source, minecartMania$heading, minecartMania$share);
 		}
 	}
 
@@ -94,13 +102,19 @@ public abstract class MinecartTntMixin {
 		if (cart.level().isClientSide() || !cart.isPrimed() || cart.isRemoved()) return;
 		if (!(cart.getBehavior() instanceof NewMinecartBehavior behavior)) return;
 
+		// Faced before the nod is worked out: the nod's sign reads the flipped flag, and facing is
+		// what settles it.
+		if (minecartMania$anchor != null && minecartMania$heading != null) minecartMania$face(cart, minecartMania$heading);
+
 		java.util.List<NewMinecartBehavior.MinecartStep> steps = behavior.lerpSteps;
 		boolean moved = steps.size() > minecartMania$stepsBefore;
 		if (moved) minecartMania$railPitch = cart.getXRot();
 
-		float share = (float) Math.clamp(minecartMania$share < 0.0 ? 1.0 : minecartMania$share, 0.0, 1.0);
+		// A volley cart nods at the fast end whatever its pace, and only once it has landed.
+		boolean volley = justfatlard.minecart_mania.cart.TntVolley.isMember(cart);
+		float share = volley ? 1.0F : (float) Math.clamp(minecartMania$share < 0.0 ? 1.0 : minecartMania$share, 0.0, 1.0);
 		float tipTicks = TIP_TICKS_STILL + (TIP_TICKS_FAST - TIP_TICKS_STILL) * share;
-		float since = FULL_FUSE - Math.min(cart.getFuse(), FULL_FUSE);
+		float since = FULL_FUSE - Math.min(cart.getFuse(), FULL_FUSE) - justfatlard.minecart_mania.cart.TntVolley.tipDelay(cart);
 		float part = Math.clamp(since / tipTicks, 0.0F, 1.0F);
 		// Eased out: quick off the mark, settling at the end, rather than a steady lean.
 		float burnt = 1.0F - (1.0F - part) * (1.0F - part);
@@ -109,6 +123,8 @@ public abstract class MinecartTntMixin {
 		float pitch = minecartMania$railPitch + tip;
 
 		if (minecartMania$anchor != null) {
+			Vec3 resting = justfatlard.minecart_mania.cart.TntVolley.restingAt(cart, cart.level().getGameTime());
+			if (resting != null) minecartMania$anchor = resting;
 			double lift = HALF_LENGTH * Math.sin(Math.toRadians(TIP_DEGREES * burnt));
 			cart.setPos(minecartMania$anchor.add(0.0, lift, 0.0));
 			cart.setDeltaMovement(Vec3.ZERO);
@@ -116,12 +132,31 @@ public abstract class MinecartTntMixin {
 		if (moved) {
 			for (int i = minecartMania$stepsBefore; i < steps.size(); i++) {
 				NewMinecartBehavior.MinecartStep step = steps.get(i);
-				steps.set(i, new NewMinecartBehavior.MinecartStep(step.position(), step.movement(), step.yRot(), step.xRot() + tip, step.weight()));
+				float yaw = minecartMania$anchor != null ? cart.getYRot() : step.yRot();
+				steps.set(i, new NewMinecartBehavior.MinecartStep(step.position(), step.movement(), yaw, step.xRot() + tip, step.weight()));
 			}
 		} else {
 			steps.add(new NewMinecartBehavior.MinecartStep(cart.position(), cart.getDeltaMovement(), cart.getYRot(), pitch, 1.0F));
 		}
 		cart.setXRot(pitch);
+	}
+
+	/**
+	 * Lies along the heading, nose to the face, the same for every cart in the charge.
+	 *
+	 * <p>Set outright, facing and flipped flag both, every tick. Off the rail a flung cart was
+	 * turned by whatever its last motion happened to be, so a volley came to rest every which
+	 * way; and the first answer to that turned a cart that was half a circle out by toggling
+	 * its flipped flag instead, which left it still half a circle out, so it toggled back the
+	 * next tick, and the next. The client eased each of those half-turns, so the cart spent
+	 * the fuse spinning through sideways with its nod swapping ends. Nothing about a cart held
+	 * at its spot needs remembering from one tick to the next.
+	 */
+	@Unique
+	private static void minecartMania$face(MinecartTNT cart, Direction heading) {
+		Vec3 along = Vec3.atLowerCornerOf(heading.getUnitVec3i());
+		cart.setFlipped(false);
+		cart.setYRot(net.minecraft.util.Mth.wrapDegrees(180.0F - (float) (Math.atan2(along.z, along.x) * 180.0 / Math.PI)));
 	}
 
 	/**
@@ -144,9 +179,19 @@ public abstract class MinecartTntMixin {
 	private void minecartMania$bore(DamageSource source, double speed, CallbackInfo ci) {
 		MinecartTNT cart = (MinecartTNT) (Object) this;
 		if (cart.level().isClientSide()) return;
+		// A follower goes off on the lead's fuse and is spent by the lead's bore.
+		if (justfatlard.minecart_mania.cart.TntVolley.isFollower(cart)) {
+			ci.cancel();
+			return;
+		}
 		Direction heading = minecartMania$heading != null ? minecartMania$heading : justfatlard.minecart_mania.cart.Headings.of(cart);
 		if (heading.getAxis().isVertical()) heading = Direction.NORTH;
-		TntTunnel.bore(cart, heading, minecartMania$share < 0.0 ? 1.0 : minecartMania$share);
+		int carts = justfatlard.minecart_mania.cart.TntVolley.sizeOf(cart);
+		// The volley is pooled first, while the chains between its carts are still there to be
+		// counted: the lead's own removal parts its chains, and parted the other way they fall as
+		// chains rather than going into the pool.
+		justfatlard.minecart_mania.cart.TntVolley.spend(cart);
+		TntTunnel.bore(cart, heading, minecartMania$share < 0.0 ? 1.0 : minecartMania$share, carts);
 		ci.cancel();
 	}
 

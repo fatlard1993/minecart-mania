@@ -25,5 +25,7 @@ public abstract class ChainBreakMixin {
 		if (!((Object) this instanceof AbstractMinecart cart)) return;
 		if (!(cart.level() instanceof ServerLevel level)) return;
 		ChainLinks.broken(level, cart);
+		justfatlard.minecart_mania.cart.DirectionMarkers.drop(cart);
+		justfatlard.minecart_mania.cart.TntVolley.forget(cart);
 	}
 }

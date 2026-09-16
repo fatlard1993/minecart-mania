@@ -17,7 +17,8 @@
     "ContainerCartMixin",
     "ChainPushMixin",
     "ChainBreakMixin",
-    "WorkingCartDropMixin"
+    "WorkingCartDropMixin",
+		"CartPlacementMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -36,6 +36,9 @@ import net.minecraft.world.item.context.DirectionalPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.properties.RailShape;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.phys.Vec3;
@@ -104,8 +107,19 @@ public final class WorkingCarts {
 
 	public static final String SCREEN = Main.MOD_ID + ":working_cart";
 	private static final Map<UUID, UUID> open = new ConcurrentHashMap<>();
-	/** Distance rolled or ticks waited since the last act; not worth saving. */
-	private static final Map<UUID, Double> progress = new ConcurrentHashMap<>();
+	/**
+	 * Where each cart last acted, or first rolled into; not worth saving.
+	 *
+	 * <p>"Every so many blocks" is counted as how far the cart now stands from that block, not
+	 * as speed added up. A parked cart on a chain is never quite still - the chain nudges it to
+	 * and fro - and the speed of every nudge was counted as travel, so a torch cart set to every
+	 * twelve blocks counted its twelve standing in one place, and went on placing while parked.
+	 * A wobble never takes a cart further than a block from where it stopped.
+	 */
+	private static final Map<UUID, BlockPos> lastActed = new ConcurrentHashMap<>();
+
+	/** Blocks along the rails a rail layer will look past its own train for the end of the line. */
+	private static final int TRAIN_REACH = 8;
 
 	public static final String TAG_LOBBED = Main.MOD_ID + ":lobbed";
 	public static final String TAG_FLOOR = Main.MOD_ID + ":floor=";
@@ -193,7 +207,9 @@ public final class WorkingCarts {
 		int chestY = 62;
 		int packY = chestY + 3 * 18 + 16;
 		int height = packY + 3 * 18 + 4 + 18 + 8;
-		ScreenBuilder screen = new ScreenBuilder(SCREEN).container(27, true).size(width, height).pauseGame(false);
+		// The id is what the client matches a redraw against, and the builder mints its own
+		// unless told; addressed by type, every press was applied and never drawn.
+		ScreenBuilder screen = new ScreenBuilder(SCREEN).id(SCREEN).container(27, true).size(width, height).pauseGame(false);
 		screen.panel("bg", 0, 0, width, height, Map.of("border", "beveled"));
 		screen.text("title", 8, 6, Map.of("text", work.kind() == Kind.DROPPER ? "Dropper Cart" : "Dispenser Cart", "color", "#404040"));
 
@@ -230,12 +246,13 @@ public final class WorkingCarts {
 			chest.setCustomDisplayBlockState(Optional.of(dressing(work.kind())));
 		}
 
-		double done = progress.getOrDefault(cart.getUUID(), 0.0) + cart.getDeltaMovement().horizontalDistance();
-		if (done < work.interval()) {
-			progress.put(cart.getUUID(), done);
-			return;
-		}
-		progress.put(cart.getUUID(), done - work.interval());
+		BlockPos here = cart.getCurrentBlockPosOrRailBelow();
+		BlockPos from = lastActed.putIfAbsent(cart.getUUID(), here);
+		if (from == null) return;
+		// Along the rails a curve is an L, and an L's length is its two legs.
+		int travelled = Math.abs(here.getX() - from.getX()) + Math.abs(here.getZ() - from.getZ());
+		if (travelled < work.interval()) return;
+		lastActed.put(cart.getUUID(), here);
 		if (work.kind() == Kind.DROPPER) {
 			lay(level, chest, work);
 		} else {
@@ -256,11 +273,18 @@ public final class WorkingCarts {
 		if (slot < 0) return;
 		ItemStack stack = chest.getItem(slot);
 		Direction heading = Headings.of(chest);
-		BlockPos target = chest.getCurrentBlockPosOrRailBelow().relative(work.side().of(heading));
+		BlockPos here = chest.getCurrentBlockPosOrRailBelow();
+		Direction out = work.side().of(heading);
+		boolean rail = stack.getItem() instanceof BlockItem item && item.getBlock() instanceof BaseRailBlock;
+		BlockPos target = rail && work.side() == Side.FRONT ? pastTheTrain(level, chest, here, heading) : here.relative(out);
+		if (target == null) return;
 
 		if (stack.getItem() instanceof BlockItem block) {
 			InteractionResult placed = block.place(new DirectionalPlaceContext(level, target, heading, stack, Direction.UP));
-			if (placed.consumesAction()) chest.setChanged();
+			if (placed.consumesAction()) {
+				chest.setChanged();
+				if (rail) straighten(level, target, heading);
+			}
 			return;
 		}
 		if (level.getBlockState(target).isAir()) {
@@ -268,6 +292,106 @@ public final class WorkingCarts {
 			level.addFreshEntity(new ItemEntity(level, target.getX() + 0.5, target.getY() + 0.5, target.getZ() + 0.5, one));
 			chest.setChanged();
 		}
+	}
+
+	/**
+	 * The next rail spot for a layer anywhere in its train, not only at the front of it.
+	 *
+	 * <p>A rail layer builds where the rail ahead runs out, and in a train the rail ahead of it
+	 * is under the carts in front: a torch cart leading a rail cart reached the end of the line,
+	 * the rail cart behind saw rail ahead of it all the way, and the train ran off the end of its
+	 * track and stopped. So the rail under the layer's own train is looked past, as far as
+	 * {@link #TRAIN_REACH}, to where it ends. Rail with nobody of this train on it is somebody's
+	 * line, and is still driven rather than built on.
+	 */
+	private static BlockPos pastTheTrain(ServerLevel level, MinecartChest chest, BlockPos here, Direction heading) {
+		java.util.Set<BlockPos> train = new java.util.HashSet<>();
+		java.util.Set<UUID> seen = new java.util.HashSet<>();
+		java.util.ArrayDeque<AbstractMinecart> pending = new java.util.ArrayDeque<>();
+		seen.add(chest.getUUID());
+		pending.add(chest);
+		while (!pending.isEmpty()) {
+			AbstractMinecart at = pending.poll();
+			for (UUID other : ChainLinks.linksOf(at)) {
+				if (seen.add(other) && level.getEntity(other) instanceof AbstractMinecart next) {
+					train.add(next.getCurrentBlockPosOrRailBelow());
+					pending.add(next);
+				}
+			}
+		}
+
+		BlockPos at = here;
+		for (int step = 0; step < TRAIN_REACH; step++) {
+			BlockPos ahead = at.relative(heading);
+			BlockPos rail = isRail(level, ahead) ? ahead
+				: isRail(level, ahead.above()) ? ahead.above()
+				: isRail(level, ahead.below()) ? ahead.below()
+				: null;
+			if (rail == null || !train.contains(rail)) break;
+			at = rail;
+		}
+		return nextRailSpot(level, at, heading);
+	}
+
+	/**
+	 * Where the next rail goes when the track builds itself ahead.
+	 *
+	 * <p>A line once begun is kept, ground or none: a rail here stands on nothing, and a level
+	 * run carries on over a drop as a span, a falling run carries on falling. Rising is the one
+	 * that listens to the ground, because a climb has a top: it goes on up while there is a
+	 * block ahead to climb, and the tick there is not, the track levels off onto the plateau it
+	 * has reached rather than climbing on into the air. On the flat, a wall ahead with room over
+	 * it starts a climb.
+	 *
+	 * <p>Null where there is nothing to lay: track that already goes on ahead, level, up or
+	 * down, is driven, not built over, and a curve underfoot is followed round rather than
+	 * run straight off. A rail laid over an existing line landed floating on top of it, or
+	 * beside a curve that re-shaped itself to meet it, and the train left its own track.
+	 */
+	private static BlockPos nextRailSpot(ServerLevel level, BlockPos here, Direction heading) {
+		BlockPos ahead = here.relative(heading);
+		RailShape underfoot = Headings.railShape(level.getBlockState(here));
+		if (underfoot != null && Headings.axisOf(underfoot) == null) return null;
+		if (isRail(level, ahead) || isRail(level, ahead.above()) || isRail(level, ahead.below())) return null;
+		Direction rise = Headings.riseOf(underfoot);
+		if (rise == heading) {
+			BlockPos up = ahead.above();
+			if (!free(level, ahead) && free(level, up) && free(level, up.above())) return up;
+			return free(level, ahead) ? ahead : up;
+		}
+		if (rise != null) {
+			BlockPos down = ahead.below();
+			return free(level, down) ? down : ahead;
+		}
+		if (free(level, ahead)) return ahead;
+		if (free(level, ahead.above()) && free(level, ahead.above(2))) return ahead.above();
+		return ahead;
+	}
+
+	private static boolean isRail(ServerLevel level, BlockPos pos) {
+		return level.getBlockState(pos).getBlock() instanceof BaseRailBlock;
+	}
+
+	private static boolean free(ServerLevel level, BlockPos pos) {
+		BlockState state = level.getBlockState(pos);
+		return state.isAir() || state.canBeReplaced();
+	}
+
+	/**
+	 * A laid rail runs on, in front of the cart.
+	 *
+	 * <p>A rail joins whatever rail it lands beside, and beside a track already laid that is a
+	 * curve: the next rail hooked into the neighbouring line and the train turned off its own
+	 * track sideways. The one behind is the only rail the new one should answer to, so a curve
+	 * is put back straight along the way the cart is going.
+	 */
+	private static void straighten(ServerLevel level, BlockPos pos, Direction heading) {
+		BlockState state = level.getBlockState(pos);
+		if (!(state.getBlock() instanceof BaseRailBlock rail)) return;
+		RailShape shape = state.getValue(rail.getShapeProperty());
+		if (shape.isSlope() || Headings.axisOf(shape) == heading.getAxis()) return;
+		RailShape straight = heading.getAxis() == Direction.Axis.X ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+		level.setBlock(pos, state.setValue(rail.getShapeProperty(), straight), Block.UPDATE_ALL);
 	}
 
 	/**
