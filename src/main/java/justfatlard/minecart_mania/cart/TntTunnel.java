@@ -100,6 +100,7 @@ public final class TntTunnel {
 			}
 		}
 		level.playSound(null, origin, SoundEvents.GENERIC_EXPLODE.value(), SoundSource.BLOCKS, 4.0F, 0.8F);
+		justfatlard.minecart_mania.Awards.bored(level, origin, cleared);
 		// A volley's leavings are pooled and dropped by the volley; a cart alone drops its own.
 		if (carts <= 1) spend(cart);
 		else cart.discard();

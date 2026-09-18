@@ -1,0 +1,18 @@
+{
+  "parent": "minecraft:story/mine_stone",
+  "display": {
+    "icon": {
+      "id": "minecraft:tnt_minecart"
+    },
+    "title": "Cut and Cover",
+    "description": "Bore a tunnel with a volley of TNT carts at full pace",
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "bored": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
