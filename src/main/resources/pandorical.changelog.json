@@ -1,0 +1,14 @@
+{
+  "overview": [
+    "The railway made worth building: faster track that switches itself, a handbrake for the rider, carts chained into trains, and working carts that lay track and dig."
+  ],
+  "versions": {
+    "1.1.3": [
+      "A chain of TNT carts goes off as one charge and bores a corridor you can walk down, with an advancement for the first real tunnel.",
+      "Rail laid ahead spans drops and follows a climb instead of stopping, chained carts hold one speed along the link, and a cart with a heading wears an arrow that says which way it is pointed."
+    ],
+    "1.0.0": [
+      "Speed lives in the track, rails switch themselves, the rider gets a handbrake, carts couple into trains, and three of the working carts become tools that lay track or dig."
+    ]
+  }
+}
