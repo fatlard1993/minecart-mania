@@ -3,9 +3,11 @@
     "The railway made worth building: faster track that switches itself, a handbrake for the rider, carts chained into trains, and working carts that lay track and dig."
   ],
   "versions": {
+    "1.1.4": [
+      "An advancement for the first real tunnel bored with a train of TNT carts."
+    ],
     "1.1.3": [
       "A chain of TNT carts goes off as one charge and bores a corridor you can walk down.",
-      "An advancement for the first real tunnel.",
       "Rail laid ahead spans drops and follows a climb instead of stopping.",
       "Chained carts hold one speed along the link.",
       "A cart with a heading wears an arrow that says which way it is pointed."
