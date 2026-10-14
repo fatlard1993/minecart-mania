@@ -3,6 +3,9 @@
     "The railway made worth building: faster track that switches itself, a handbrake for the rider, carts chained into trains, and working carts that lay track and dig."
   ],
   "versions": {
+    "1.1.5": [
+      "Release notes rewritten to read plainly; nothing in play changes."
+    ],
     "1.1.4": [
       "An advancement for the first real tunnel bored with a train of TNT carts."
     ],
