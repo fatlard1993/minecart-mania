@@ -3,6 +3,9 @@
     "The railway made worth building: faster track that switches itself, a handbrake for the rider, carts chained into trains, and working carts that lay track and dig."
   ],
   "versions": {
+    "1.1.9": [
+      "A demo to play in PvP Dimensions' onboarding."
+    ],
     "1.1.8": [
       "Drop changelog notes for changes nothing in the game shows."
     ],
