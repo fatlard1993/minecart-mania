@@ -15,6 +15,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -92,6 +94,13 @@ public final class ChainLinks {
 	public static void register() {
 		UseEntityCallback.EVENT.register(ChainLinks::onUse);
 		ServerTickEvents.END_SERVER_TICK.register(ChainLinks::tickLeashes);
+		ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
+			if (entity instanceof AbstractMinecart cart) ChainVisual.forget(cart.getUUID());
+		});
+		ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			pending.clear();
+			ChainVisual.clear();
+		});
 	}
 
 	private static boolean isChain(ItemStack stack) {

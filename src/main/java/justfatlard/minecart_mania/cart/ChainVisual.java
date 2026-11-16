@@ -3,6 +3,7 @@ package justfatlard.minecart_mania.cart;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import justfatlard.minecart_mania.Main;
@@ -32,6 +33,7 @@ final class ChainVisual {
 	private record Shape(int links, Direction.Axis axis) {}
 
 	private static final Map<String, Shape> shown = new ConcurrentHashMap<>();
+	private static final Set<String> hidden = ConcurrentHashMap.newKeySet();
 	/**
 	 * Where the chain runs, from the cart's own origin, which is the middle of its underside:
 	 * a quarter block down, so it hangs just under the floor of the cart where a coupling is.
@@ -49,11 +51,33 @@ final class ChainVisual {
 	}
 
 	static void hideLeash(UUID cart) {
-		if (shown.containsKey(leashId(cart))) PandoricalApi.structures().setVisible(leashId(cart), false);
+		String id = leashId(cart);
+		if (shown.containsKey(id) && hidden.add(id)) PandoricalApi.structures().setVisible(id, false);
 	}
 
 	static void removeLeash(UUID cart) {
-		if (shown.remove(leashId(cart)) != null) PandoricalApi.structures().despawn(leashId(cart));
+		drop(leashId(cart));
+	}
+
+	/**
+	 * Every chain at this cart, as it leaves the world. Pandorical lets go of a structure whose
+	 * cart has gone, so one remembered past an unload would come back only as poses sent to nothing.
+	 */
+	static void forget(UUID cart) {
+		String end = cart.toString();
+		for (String id : List.copyOf(shown.keySet())) {
+			if (id.contains("/" + end)) drop(id);
+		}
+	}
+
+	static void clear() {
+		shown.clear();
+		hidden.clear();
+	}
+
+	private static void drop(String id) {
+		hidden.remove(id);
+		if (shown.remove(id) != null) PandoricalApi.structures().despawn(id);
 	}
 
 	/**
@@ -84,9 +108,10 @@ final class ChainVisual {
 			if (have != null) PandoricalApi.structures().despawn(id);
 			PandoricalApi.structures().spawn(head, id, links(want, gap.y < 0), pose);
 			shown.put(id, want);
+			hidden.remove(id);
 		} else {
 			PandoricalApi.structures().updatePose(id, pose);
-			PandoricalApi.structures().setVisible(id, true);
+			if (hidden.remove(id)) PandoricalApi.structures().setVisible(id, true);
 		}
 	}
 
@@ -96,9 +121,8 @@ final class ChainVisual {
 
 	/** The chain between these two, whichever way round it was drawn. */
 	static void remove(UUID one, UUID other) {
-		for (String id : new String[] {structureId(one, other), structureId(other, one)}) {
-			if (shown.remove(id) != null) PandoricalApi.structures().despawn(id);
-		}
+		drop(structureId(one, other));
+		drop(structureId(other, one));
 	}
 
 	/** One chain per link, named for both ends: a cart in the middle of a train heads one and tails another. */
