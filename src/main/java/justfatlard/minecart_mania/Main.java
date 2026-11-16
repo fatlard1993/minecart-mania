@@ -91,8 +91,19 @@ public class Main implements ModInitializer {
 		if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("block-tip")) {
 			justfatlard.minecart_mania.integration.WorkingCartTips.register();
 		}
-		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register(
-			(handler, server) -> Handbrake.forget(handler.getPlayer().getUUID()));
+		net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			Handbrake.forget(handler.getPlayer().getUUID());
+			FurnaceControls.forgetPlayer(handler.getPlayer().getUUID());
+			WorkingCarts.forgetPlayer(handler.getPlayer().getUUID());
+		});
+		// A singleplayer world opened after this one starts with none of this one's carts.
+		net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+			justfatlard.minecart_mania.cart.Headings.clear();
+			FurnaceControls.clear();
+			WorkingCarts.clear();
+			justfatlard.minecart_mania.cart.DirectionMarkers.clear();
+			justfatlard.minecart_mania.cart.TntVolley.clear();
+		});
 
 		ResourceKey<CreativeModeTab> tabKey = ResourceKey.create(Registries.CREATIVE_MODE_TAB, id("minecart_mania"));
 		CreativeModeTab tab = FabricCreativeModeTab.builder()

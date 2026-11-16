@@ -85,6 +85,11 @@ public final class DirectionMarkers {
 		if (marker.getVehicle() != cart) marker.setPos(cart.getX(), cart.getY(), cart.getZ());
 	}
 
+	public static void clear() {
+		markers.clear();
+		shown.clear();
+	}
+
 	/** The arrow goes with the cart. */
 	public static void drop(AbstractMinecart cart) {
 		shown.remove(cart.getUUID());

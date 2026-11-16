@@ -232,6 +232,20 @@ public final class WorkingCarts {
 		PandoricalApi.screens().openContainer(player, screen.build(), cart, java.util.Set.of());
 	}
 
+	public static void forget(AbstractMinecart cart) {
+		lastActed.remove(cart.getUUID());
+	}
+
+	/** A player who leaves with the controls open never sends their close. */
+	public static void forgetPlayer(UUID player) {
+		open.remove(player);
+	}
+
+	public static void clear() {
+		open.clear();
+		lastActed.clear();
+	}
+
 	/** Once a tick, server side. */
 	public static void tick(AbstractMinecart cart) {
 		if (!(cart instanceof MinecartChest chest) || !(cart.level() instanceof ServerLevel level)) return;

@@ -348,6 +348,22 @@ public final class FurnaceControls {
 		return s.on() ? s.level() - 1 : 0;
 	}
 
+	public static void forget(AbstractMinecart cart) {
+		activated.remove(cart.getUUID());
+	}
+
+	/** A player who leaves with the panel open never sends its close. */
+	public static void forgetPlayer(UUID player) {
+		open.remove(player);
+		slots.remove(player);
+	}
+
+	public static void clear() {
+		open.clear();
+		slots.clear();
+		activated.clear();
+	}
+
 	/** An activator rail throws the switch: once per pass, not once per tick on the rail. */
 	public static void activate(AbstractMinecart cart, boolean powered) {
 		if (!(cart instanceof MinecartFurnace furnace)) return;

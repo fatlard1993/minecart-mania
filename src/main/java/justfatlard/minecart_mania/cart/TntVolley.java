@@ -245,6 +245,10 @@ public final class TntVolley {
 		members.remove(cart.getUUID());
 	}
 
+	public static void clear() {
+		members.clear();
+	}
+
 	/** What the cart's mixin lets a volley set on a follower before it is lit. */
 	public interface TntLit {
 		void minecartMania$lightAs(Direction heading, double share);

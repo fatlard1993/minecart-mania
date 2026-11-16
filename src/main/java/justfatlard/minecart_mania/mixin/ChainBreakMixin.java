@@ -27,5 +27,8 @@ public abstract class ChainBreakMixin {
 		ChainLinks.broken(level, cart);
 		justfatlard.minecart_mania.cart.DirectionMarkers.drop(cart);
 		justfatlard.minecart_mania.cart.TntVolley.forget(cart);
+		justfatlard.minecart_mania.cart.Headings.forget(cart);
+		justfatlard.minecart_mania.cart.FurnaceControls.forget(cart);
+		justfatlard.minecart_mania.cart.WorkingCarts.forget(cart);
 	}
 }

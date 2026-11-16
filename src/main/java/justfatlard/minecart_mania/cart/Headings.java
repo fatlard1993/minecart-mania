@@ -116,6 +116,14 @@ public final class Headings {
 		}
 	}
 
+	public static void forget(AbstractMinecart cart) {
+		last.remove(cart.getUUID());
+	}
+
+	public static void clear() {
+		last.clear();
+	}
+
 	/** Called every tick for every cart so the memory is fresh when the cart stops. */
 	public static void note(AbstractMinecart cart) {
 		of(cart);
