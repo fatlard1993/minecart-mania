@@ -3,7 +3,7 @@
   "id": "minecart-mania-justfatlard",
   "version": "${version}",
   "name": "Minecart Mania",
-  "description": "Faster rails, a handbrake, chained carts, working carts that lay track and dig, and rails that switch themselves",
+  "description": "Faster rails, chained carts, and carts that lay track and dig",
   "authors": [
     "justfatlard"
   ],
