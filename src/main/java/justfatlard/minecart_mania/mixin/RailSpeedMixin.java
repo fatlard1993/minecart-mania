@@ -1,5 +1,6 @@
 package justfatlard.minecart_mania.mixin;
 
+import justfatlard.minecart_mania.rail.MountedRails;
 import justfatlard.minecart_mania.rail.Rails;
 import justfatlard.minecart_mania.rail.SwitchingRailBlock;
 import net.minecraft.core.BlockPos;
@@ -39,7 +40,7 @@ public abstract class RailSpeedMixin extends MinecartBehavior {
 	private void minecartMania$railSpeed(ServerLevel level, CallbackInfoReturnable<Double> cir) {
 		BlockPos pos = minecart.getCurrentBlockPosOrRailBelow();
 		BlockState state = level.getBlockState(pos);
-		if (!Rails.isRail(state)) return;
+		if (!Rails.isRail(state) && !MountedRails.isMounted(state)) return;
 		double perSecond = Rails.maxSpeed(state);
 		if (minecart.isInWater()) perSecond *= 0.5;
 		cir.setReturnValue(perSecond / 20.0);

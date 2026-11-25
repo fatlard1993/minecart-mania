@@ -39,9 +39,12 @@ public final class Rails {
 			.noCollision().strength(strength).sound(sound);
 	}
 
-	/** The speed a cart may reach on this block, or {@link #IRON} for any rail this mod does not know. */
+	/**
+	 * The speed a cart may reach on this block, or {@link #IRON} for any rail this mod does not
+	 * know. A wall or ceiling rail runs at its floor rail's.
+	 */
 	public static double maxSpeed(BlockState state) {
-		Block block = state.getBlock();
+		Block block = state.getBlock() instanceof MountedRailBlock mounted ? mounted.floor() : state.getBlock();
 		if (block == WOODEN_RAIL) return WOOD;
 		if (block == COPPER_POWERED_RAIL) return COPPER_POWERED;
 		if (block == Blocks.POWERED_RAIL) return GOLD_POWERED;

@@ -94,6 +94,7 @@ public class Main implements ModInitializer {
 
 		RailCycling.register();
 		MountedRails.register();
+		justfatlard.minecart_mania.cart.SurfaceRide.register();
 		Handbrake.register();
 		ChainLinks.register();
 		FurnaceControls.register();
@@ -114,6 +115,7 @@ public class Main implements ModInitializer {
 			WorkingCarts.clear();
 			justfatlard.minecart_mania.cart.DirectionMarkers.clear();
 			justfatlard.minecart_mania.cart.TntVolley.clear();
+			justfatlard.minecart_mania.cart.SurfaceRide.clear();
 		});
 
 		ResourceKey<CreativeModeTab> tabKey = ResourceKey.create(Registries.CREATIVE_MODE_TAB, id("minecart_mania"));

@@ -10,6 +10,7 @@
 		"fabric-client-gametest": [
 			"justfatlard.minecart_mania.gametest.SmokeTest",
 			"justfatlard.minecart_mania.gametest.MountedTrackLays",
+			"justfatlard.minecart_mania.gametest.MountedTrackRides",
 			"justfatlard.minecart_mania.gametest.MountedTrackPictured"
 		]
 	},

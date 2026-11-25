@@ -454,11 +454,15 @@ public final class WorkingCarts {
 		public InteractionResult useOn(UseOnContext context) {
 			Level level = context.getLevel();
 			BlockPos pos = context.getClickedPos();
-			if (!justfatlard.minecart_mania.rail.Rails.isRail(level.getBlockState(pos))) return InteractionResult.FAIL;
+			BlockState track = level.getBlockState(pos);
+			if (!justfatlard.minecart_mania.rail.MountedRails.isTrack(track)) return InteractionResult.FAIL;
 			ItemStack stack = context.getItemInHand();
 			if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
 
-			MinecartChest cart = AbstractMinecart.createMinecart(server, pos.getX() + 0.5, pos.getY() + 0.0625, pos.getZ() + 0.5,
+			Vec3 at = justfatlard.minecart_mania.rail.MountedRails.isMounted(track)
+				? SurfaceRide.restingSpot(track, pos)
+				: new Vec3(pos.getX() + 0.5, pos.getY() + 0.0625, pos.getZ() + 0.5);
+			MinecartChest cart = AbstractMinecart.createMinecart(server, at.x, at.y, at.z,
 				EntityTypes.CHEST_MINECART, EntitySpawnReason.SPAWN_ITEM_USE, stack, context.getPlayer());
 			cart.setAttached(WORK, new Work(kind, Side.FRONT, kind == Kind.DROPPER ? 1 : 4));
 			cart.setCustomDisplayBlockState(Optional.of(dressing(kind)));

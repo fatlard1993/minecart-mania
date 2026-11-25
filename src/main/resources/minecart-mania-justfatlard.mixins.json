@@ -19,7 +19,11 @@
     "ChainBreakMixin",
     "WorkingCartDropMixin",
     "CartPlacementMixin",
-    "RailMeetsWallMixin"
+    "RailMeetsWallMixin",
+    "SurfaceRideMixin",
+    "SurfaceCatchMixin",
+    "MountedSeatMixin",
+    "CartOnMountedTrackMixin"
   ],
   "injectors": {
     "defaultRequire": 1
