@@ -1,0 +1,6 @@
+{
+  "parent": "minecart-mania-justfatlard:block/rail_flat_crosswise",
+  "textures": {
+    "rail": "minecraft:block/rail"
+  }
+}

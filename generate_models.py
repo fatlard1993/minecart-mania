@@ -635,6 +635,220 @@ def rail_variants(name, corner):
     }
 
 
+# ---- Rails on walls and ceilings ----
+#
+# A mounted rail is drawn with the floor rail's own models turned onto its face by the
+# blockstate: x 180 hangs one from the ceiling, x 90 stands one against a wall. Which model and
+# which turn is not worked out by hand. Each model is described by where its two ends are and
+# which side its sleepers face, the same as the game describes each mounted shape
+# (CeilingRailBlock and WallRailBlock), and the sixteen turns a blockstate allows are searched
+# for the one that carries the first onto the second.
+#
+# Two models the floor never needed: the curve's mirror image, because a curve on a wall can
+# face four ways and a blockstate turns a floor model onto a wall only two of them; and the
+# bend, a quarter pipe from the floor up the wall, which turned over is also the bend from the
+# wall onto the ceiling.
+
+def bend():
+    """The quarter pipe: from the middle of the floor's south edge up to the top of the north
+    wall, curving about the block's top south edge, sleepers on the inside of the curve.
+
+    Built on the floor curve's own polyline, doubled in size and stood on its side, so the legs
+    turn at the same 22.5 degree steps a model element allows."""
+    import math
+    line = [(16 + 2 * (x - 16), 16 + 2 * (z - 16)) for x, z in turn_centre_line()]
+    points = [(b, a) for a, b in line]   # (z, y): from (16, 0) to (0, 16)
+    elements = []
+
+    def segment(p0, p1, x0, x1, h0, h1, faces):
+        (z0, y0), (z1, y1) = p0, p1
+        mz, my = (z0 + z1) / 2, (y0 + y1) / 2
+        length = ((z1 - z0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        angle = round(math.degrees(math.atan2(y1 - y0, z0 - z1)) / 22.5) * 22.5
+        if angle <= 45:
+            frm, to, turn = [x0, my + h0, mz - length / 2], [x1, my + h1, mz + length / 2], angle
+        else:
+            # Steeper than an element turns: a box standing up, its inside face toward +z
+            frm, to, turn = [x0, my - length / 2, mz + h0], [x1, my + length / 2, mz + h1], angle - 90
+            faces = {"up": faces["north"], "down": faces["south"], "south": faces["up"], "north": faces["down"],
+                     "west": {k: v for k, v in faces["west"].items() if k != "rotation"},
+                     "east": {k: v for k, v in faces["east"].items() if k != "rotation"}}
+        e = {"from": [round(v, 3) for v in frm], "to": [round(v, 3) for v in to], "faces": faces}
+        if turn:
+            e["rotation"] = {"origin": [8, round(my, 3), round(mz, 3)], "axis": "x", "angle": turn, "rescale": False}
+        return e
+
+    for p0, p1 in zip(points, points[1:]):
+        (z0, y0), (z1, y1) = p0, p1
+        mid = ((z0 + z1) / 2, (y0 + y1) / 2)
+        length = ((z1 - z0) ** 2 + (y1 - y0) ** 2) ** 0.5
+        # One sleeper at the middle of every leg: two pixels of it, along the track
+        tie_faces_ = {"up": {"uv": [1, 5, 15, 7], "texture": "#rail"},
+                      "down": {"uv": [1, 7, 15, 5], "texture": "#rail"},
+                      "north": {"uv": [1, 5, 15, 6], "texture": "#rail"},
+                      "south": {"uv": [1, 5, 15, 6], "texture": "#rail"},
+                      "west": {"uv": [7, 5, 9, 6], "texture": "#rail"},
+                      "east": {"uv": [7, 5, 9, 6], "texture": "#rail"}}
+        if length >= 2:
+            dz, dy = (z1 - z0) / length, (y1 - y0) / length
+            elements.append(segment((mid[0] - dz, mid[1] - dy), (mid[0] + dz, mid[1] + dy),
+                                    1, 15, 0, TIE_HEIGHT, tie_faces_))
+        for x in RAILS:
+            elements.append(segment(p0, p1, x, x + 2, TIE_HEIGHT, TIE_HEIGHT + RAIL_HEIGHT,
+                                    rail_faces(x, length)))
+    return {"ambientocclusion": False, "textures": {"particle": "#rail"}, "elements": elements}
+
+
+def flat_crosswise():
+    """The straight laid east to west. A blockstate turns about x before y, so a north-south
+    straight stood against a wall always runs up it; one along the wall starts crosswise."""
+    elements = []
+    for e in flat()["elements"]:
+        crossed = dict(e)
+        crossed["from"] = [e["from"][2], e["from"][1], e["from"][0]]
+        crossed["to"] = [e["to"][2], e["to"][1], e["to"][0]]
+        crossed["faces"] = turned(e["faces"])
+        elements.append(crossed)
+    return {"ambientocclusion": False, "textures": {"particle": "#rail"}, "elements": elements}
+
+
+def curved_mirrored():
+    return {"ambientocclusion": False, "textures": {"particle": "#rail"}, "elements": curve_elements(place=mirrored)}
+
+
+def _v(*c):
+    return tuple(round(x, 6) for x in c)
+
+
+def _add(a, b):
+    return _v(*(x + y for x, y in zip(a, b)))
+
+
+def _scale(a, k):
+    return _v(*(x * k for x in a))
+
+
+def _turn(v, x_turns, y_turns):
+    """A direction under a blockstate's x then y rotation: x 90 carries down to south, y 90 north to east."""
+    for _ in range(x_turns):
+        v = _v(v[0], v[2], -v[1])
+    for _ in range(y_turns):
+        v = _v(-v[2], v[1], v[0])
+    return v
+
+
+# Each template: (model suffix, its two ends measured from the block's centre, the side its sleepers face)
+UP, DOWN_ = _v(0, 0.5, 0), _v(0, -0.5, 0)
+MOUNTED_TEMPLATES = [
+    ("flat", {_v(0, -0.5, -0.5), _v(0, -0.5, 0.5)}, _v(0, 1, 0)),
+    ("flat_crosswise", {_v(-0.5, -0.5, 0), _v(0.5, -0.5, 0)}, _v(0, 1, 0)),
+    ("raised_ne", {_v(0, -0.5, 0.5), _v(0, 0.5, -0.5)}, _v(0, 1, 0)),
+    ("raised_sw", {_v(0, -0.5, -0.5), _v(0, 0.5, 0.5)}, _v(0, 1, 0)),
+    ("corner", {_v(0, -0.5, 0.5), _v(0.5, -0.5, 0)}, _v(0, 1, 0)),
+    ("corner_mirrored", {_v(0, -0.5, 0.5), _v(-0.5, -0.5, 0)}, _v(0, 1, 0)),
+]
+BEND_TEMPLATE = ("bend", {_v(0, -0.5, 0.5), _v(0, 0.5, -0.5)}, _v(0, 0.5, 0.5))
+
+DIRS = {"north": _v(0, 0, -1), "south": _v(0, 0, 1), "east": _v(1, 0, 0), "west": _v(-1, 0, 0)}
+RAIL_EXITS = {  # vanilla's AbstractMinecart.exits, the rising end marked with a 1 in y
+    "north_south": ("north", "south"), "east_west": ("east", "west"),
+    "ascending_east": ("east+", "west"), "ascending_west": ("west+", "east"),
+    "ascending_north": ("north+", "south"), "ascending_south": ("south+", "north"),
+    "south_east": ("south", "east"), "south_west": ("south", "west"),
+    "north_west": ("north", "west"), "north_east": ("north", "east"),
+}
+
+
+def ceiling_shape(shape):
+    a, b = RAIL_EXITS[shape]
+    if a.endswith("+"):
+        rise = DIRS[a[:-1]]
+        ends = {_add(DOWN_, _scale(rise, -0.5)), _add(UP, _scale(rise, 0.5))}
+    else:
+        ends = {_add(UP, _scale(DIRS[a], 0.5)), _add(UP, _scale(DIRS[b], 0.5))}
+    return ends, _v(0, -1, 0), False
+
+
+def wall_shape(facing, track):
+    wall = DIRS[facing]
+    right = _v(-wall[2], 0, wall[0])
+    face, out = _scale(wall, 0.5), _scale(wall, -1)
+    r, u = _scale(right, 0.5), UP
+    neg = lambda v: _scale(v, -1)
+    floor_edge, ceiling_edge = _add(DOWN_, _scale(wall, -0.5)), _add(UP, _scale(wall, -0.5))
+    lines = {
+        "along": (neg(r), r), "climb": (neg(u), u),
+        "up_left": (neg(r), u), "up_right": (r, u), "down_left": (neg(r), neg(u)), "down_right": (r, neg(u)),
+    }
+    if track in lines:
+        a, b = lines[track]
+        return {_add(face, a), _add(face, b)}, out, False
+    if track == "from_floor":
+        return {floor_edge, _add(face, u)}, ceiling_edge, True
+    return {_add(face, neg(u)), ceiling_edge}, floor_edge, True
+
+
+def placed(ends, side, bent):
+    """The template and turn that draw a shape with these ends, sleepers toward {@code side}."""
+    for name, t_ends, t_side in ([BEND_TEMPLATE] if bent else MOUNTED_TEMPLATES):
+        for x in range(4):
+            for y in range(4):
+                if {_turn(e, x, y) for e in t_ends} == ends and _turn(t_side, x, y) == side:
+                    variant = {}
+                    if x:
+                        variant["x"] = x * 90
+                    if y:
+                        variant["y"] = y * 90
+                    return name, variant
+    raise ValueError("no turn of any template draws %s facing %s" % (sorted(ends), side))
+
+
+WALL_TRACKS = ["along", "climb", "up_left", "up_right", "down_left", "down_right", "from_floor", "to_ceiling"]
+# Each mounted kind: (block name suffix, its texture when unpowered, when powered or None)
+MOUNTED_KINDS = [
+    ("rail", "minecraft:block/rail", None),
+    ("powered_rail", "minecraft:block/powered_rail", "minecraft:block/powered_rail_on"),
+    ("wooden_rail", NS + ":block/wooden_rail", None),
+    ("copper_powered_rail", NS + ":block/copper_powered_rail", NS + ":block/copper_powered_rail_on"),
+]
+MOUNTED_PARENTS = {
+    "flat": "minecraft:block/rail_flat",
+    "flat_crosswise": NS + ":block/rail_flat_crosswise",
+    "raised_ne": "minecraft:block/template_rail_raised_ne",
+    "raised_sw": "minecraft:block/template_rail_raised_sw",
+    "corner": "minecraft:block/rail_curved",
+    "corner_mirrored": NS + ":block/rail_curved_mirrored",
+    "bend": NS + ":block/rail_bend",
+}
+
+
+def mounted():
+    write(os.path.join(MOD, "models/block/rail_flat_crosswise.json"), flat_crosswise())
+    write(os.path.join(MOD, "models/block/rail_curved_mirrored.json"), curved_mirrored())
+    write(os.path.join(MOD, "models/block/rail_bend.json"), bend())
+    for kind, texture, lit in MOUNTED_KINDS:
+        looks = [("", texture)] + ([("_on", lit)] if lit else [])
+        for on, tex in looks:
+            for template, parent in MOUNTED_PARENTS.items():
+                write(os.path.join(MOD, "models/block/mounted/" + kind + on + "_" + template + ".json"),
+                      {"parent": parent, "textures": {"rail": tex}})
+
+        def variants(shapes):
+            out = {}
+            for key, (ends, side, bent) in shapes:
+                template, turn = placed(ends, side, bent)
+                for on, _ in looks:
+                    full = key + (",powered=" + ("true" if on else "false") if lit else "")
+                    out[full] = {"model": NS + ":block/mounted/" + kind + on + "_" + template, **turn}
+            return out
+
+        write(os.path.join(MOD, "blockstates/ceiling_" + kind + ".json"), {"variants": variants(
+            ("track=" + shape, ceiling_shape(shape)) for shape in RAIL_EXITS)})
+        write(os.path.join(MOD, "blockstates/wall_" + kind + ".json"), {"variants": variants(
+            ("facing=" + facing + ",track=" + track, wall_shape(facing, track))
+            for facing in DIRS for track in WALL_TRACKS)})
+
+
 def main():
     # The 3D templates, under vanilla's own names
     write(os.path.join(VANILLA, "models/block/rail_flat.json"), flat())
@@ -690,6 +904,8 @@ def main():
 
     for name in ("wooden_rail", "copper_powered_rail", "cross_rail", "tee_rail", "dropper_minecart", "dispenser_minecart"):
         item(name)
+
+    mounted()
 
 
 if __name__ == "__main__":

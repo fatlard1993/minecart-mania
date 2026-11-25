@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerLevel;
  * <p>Kept beside the world rather than in the block, because a vanilla rail's states are fixed
  * and every client knows them: one more property on {@code minecraft:rail} would renumber every
  * block state a vanilla client thinks it knows. A pin is dropped the moment the block there is
- * no longer a rail, so a broken and relaid track starts unpinned.
+ * no longer a rail, floor or mounted, so a broken and relaid track starts unpinned.
  */
 public final class RailPins {
 	private RailPins() {}
@@ -27,7 +27,7 @@ public final class RailPins {
 	public static boolean isPinned(ServerLevel level, BlockPos pos) {
 		List<Long> pins = level.getAttached(PINS);
 		if (pins == null || !pins.contains(pos.asLong())) return false;
-		if (!Rails.isRail(level.getBlockState(pos))) {
+		if (!MountedRails.isTrack(level.getBlockState(pos))) {
 			unpin(level, pos);
 			return false;
 		}

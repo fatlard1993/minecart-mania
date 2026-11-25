@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/rail_flat",
+  "textures": {
+    "rail": "minecart-mania-justfatlard:block/wooden_rail"
+  }
+}

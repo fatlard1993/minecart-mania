@@ -18,7 +18,8 @@
     "ChainPushMixin",
     "ChainBreakMixin",
     "WorkingCartDropMixin",
-		"CartPlacementMixin"
+    "CartPlacementMixin",
+    "RailMeetsWallMixin"
   ],
   "injectors": {
     "defaultRequire": 1

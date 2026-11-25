@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/rail_flat",
+  "textures": {
+    "rail": "minecart-mania-justfatlard:block/copper_powered_rail"
+  }
+}

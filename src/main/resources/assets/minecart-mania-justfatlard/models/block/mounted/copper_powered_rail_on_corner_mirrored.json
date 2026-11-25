@@ -1,0 +1,6 @@
+{
+  "parent": "minecart-mania-justfatlard:block/rail_curved_mirrored",
+  "textures": {
+    "rail": "minecart-mania-justfatlard:block/copper_powered_rail_on"
+  }
+}

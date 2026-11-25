@@ -7,5 +7,13 @@
   "item.minecart-mania-justfatlard.dropper_minecart": "Minecart with Dropper",
   "item.minecart-mania-justfatlard.dispenser_minecart": "Minecart with Dispenser",
   "minecart-mania-justfatlard.chain.held": "Chain held to this cart - click the next, or lead it",
-  "minecart-mania-justfatlard.chain.held.controller": "Chain held to this cart - press [use] on the next, or lead it"
+  "minecart-mania-justfatlard.chain.held.controller": "Chain held to this cart - press [use] on the next, or lead it",
+  "block.minecart-mania-justfatlard.ceiling_rail": "Rail",
+  "block.minecart-mania-justfatlard.wall_rail": "Rail",
+  "block.minecart-mania-justfatlard.ceiling_powered_rail": "Powered Rail",
+  "block.minecart-mania-justfatlard.wall_powered_rail": "Powered Rail",
+  "block.minecart-mania-justfatlard.ceiling_wooden_rail": "Wooden Rail",
+  "block.minecart-mania-justfatlard.wall_wooden_rail": "Wooden Rail",
+  "block.minecart-mania-justfatlard.ceiling_copper_powered_rail": "Copper Powered Rail",
+  "block.minecart-mania-justfatlard.wall_copper_powered_rail": "Copper Powered Rail"
 }

@@ -1,0 +1,98 @@
+{
+  "variants": {
+    "track=north_south,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_flat",
+      "x": 180
+    },
+    "track=north_south,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_flat",
+      "x": 180
+    },
+    "track=east_west,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_flat",
+      "x": 180,
+      "y": 90
+    },
+    "track=east_west,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_flat",
+      "x": 180,
+      "y": 90
+    },
+    "track=ascending_east,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_raised_ne",
+      "x": 180,
+      "y": 90
+    },
+    "track=ascending_east,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_raised_ne",
+      "x": 180,
+      "y": 90
+    },
+    "track=ascending_west,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_raised_ne",
+      "x": 180,
+      "y": 270
+    },
+    "track=ascending_west,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_raised_ne",
+      "x": 180,
+      "y": 270
+    },
+    "track=ascending_north,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_raised_ne",
+      "x": 180
+    },
+    "track=ascending_north,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_raised_ne",
+      "x": 180
+    },
+    "track=ascending_south,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_raised_ne",
+      "x": 180,
+      "y": 180
+    },
+    "track=ascending_south,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_raised_ne",
+      "x": 180,
+      "y": 180
+    },
+    "track=south_east,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_corner",
+      "x": 180,
+      "y": 90
+    },
+    "track=south_east,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_corner",
+      "x": 180,
+      "y": 90
+    },
+    "track=south_west,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_corner",
+      "x": 180,
+      "y": 180
+    },
+    "track=south_west,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_corner",
+      "x": 180,
+      "y": 180
+    },
+    "track=north_west,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_corner",
+      "x": 180,
+      "y": 270
+    },
+    "track=north_west,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_corner",
+      "x": 180,
+      "y": 270
+    },
+    "track=north_east,powered=false": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_corner",
+      "x": 180
+    },
+    "track=north_east,powered=true": {
+      "model": "minecart-mania-justfatlard:block/mounted/powered_rail_on_corner",
+      "x": 180
+    }
+  }
+}

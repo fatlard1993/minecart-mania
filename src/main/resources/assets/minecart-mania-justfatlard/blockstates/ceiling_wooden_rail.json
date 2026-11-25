@@ -1,0 +1,51 @@
+{
+  "variants": {
+    "track=north_south": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_flat",
+      "x": 180
+    },
+    "track=east_west": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_flat",
+      "x": 180,
+      "y": 90
+    },
+    "track=ascending_east": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_raised_ne",
+      "x": 180,
+      "y": 90
+    },
+    "track=ascending_west": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_raised_ne",
+      "x": 180,
+      "y": 270
+    },
+    "track=ascending_north": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_raised_ne",
+      "x": 180
+    },
+    "track=ascending_south": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_raised_ne",
+      "x": 180,
+      "y": 180
+    },
+    "track=south_east": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_corner",
+      "x": 180,
+      "y": 90
+    },
+    "track=south_west": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_corner",
+      "x": 180,
+      "y": 180
+    },
+    "track=north_west": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_corner",
+      "x": 180,
+      "y": 270
+    },
+    "track=north_east": {
+      "model": "minecart-mania-justfatlard:block/mounted/wooden_rail_corner",
+      "x": 180
+    }
+  }
+}

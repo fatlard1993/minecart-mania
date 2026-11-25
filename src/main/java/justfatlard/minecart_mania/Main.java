@@ -6,6 +6,8 @@ import justfatlard.minecart_mania.cart.ChainLinks;
 import justfatlard.minecart_mania.cart.FurnaceControls;
 import justfatlard.minecart_mania.cart.WorkingCarts;
 import justfatlard.minecart_mania.cart.Handbrake;
+import justfatlard.minecart_mania.rail.MountedRailBlock;
+import justfatlard.minecart_mania.rail.MountedRails;
 import justfatlard.minecart_mania.rail.RailCycling;
 import justfatlard.minecart_mania.rail.Rails;
 import justfatlard.pandorical.api.BlockRegistration;
@@ -71,6 +73,14 @@ public class Main implements ModInitializer {
 			PandoricalApi.content().registerItem(MOD_ID + ":" + name, new ItemRegistration()
 				.model(MOD_ID + ":item/" + name));
 		}
+		// Rails on walls and ceilings: blocks with no item of their own, laid by the floor rail's
+		// item against a wall or a ceiling and dropping it again
+		for (var entry : MountedRails.BLOCKS.entrySet()) {
+			Registry.register(BuiltInRegistries.BLOCK, id(entry.getKey()), entry.getValue());
+			boolean powered = entry.getValue().defaultBlockState().hasProperty(MountedRailBlock.POWERED);
+			PandoricalApi.content().registerBlock(MOD_ID + ":" + entry.getKey(), new BlockRegistration()
+				.baseBlock(powered ? "minecraft:powered_rail" : "minecraft:rail"));
+		}
 		// The carts: plain items, each placing a vanilla cart entity with a note on it
 		Map<String, Item> carts = new LinkedHashMap<>(WorkingCarts.ITEMS);
 		for (var entry : carts.entrySet()) {
@@ -83,6 +93,7 @@ public class Main implements ModInitializer {
 		PandoricalApi.content().registerModAssets(MOD_ID);
 
 		RailCycling.register();
+		MountedRails.register();
 		Handbrake.register();
 		ChainLinks.register();
 		FurnaceControls.register();

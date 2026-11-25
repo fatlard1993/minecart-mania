@@ -1,0 +1,6 @@
+{
+  "parent": "minecart-mania-justfatlard:block/rail_curved_mirrored",
+  "textures": {
+    "rail": "minecraft:block/powered_rail"
+  }
+}

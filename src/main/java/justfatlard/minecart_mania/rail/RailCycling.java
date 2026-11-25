@@ -41,6 +41,10 @@ public final class RailCycling {
 		}
 		BlockPos pos = hit.getBlockPos();
 		BlockState state = level.getBlockState(pos);
+		if (MountedRails.isMounted(state)) {
+			if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
+			return cycleMounted(player, server, pos, state);
+		}
 		if (!(state.getBlock() instanceof BaseRailBlock rail)) return InteractionResult.PASS;
 		if (!(level instanceof ServerLevel server)) return InteractionResult.SUCCESS;
 		if (level.hasNeighborSignal(pos)) {
@@ -68,6 +72,26 @@ public final class RailCycling {
 		level.setBlock(pos, state.setValue(property, next), Block.UPDATE_ALL);
 		RailPins.pin(server, pos);
 		player.sendOverlayMessage(Component.literal("Rail set " + next.getSerializedName()
+			+ " (" + (options.indexOf(next) + 1) + " of " + options.size() + ")"));
+		return InteractionResult.SUCCESS;
+	}
+
+	/** A wall or ceiling rail steps through the shapes on its own face whose both ends could meet track. */
+	private static InteractionResult cycleMounted(Player player, ServerLevel level, BlockPos pos, BlockState state) {
+		List<BlockState> options = new ArrayList<>();
+		for (BlockState option : MountedRails.shapes(state)) {
+			if (MountedRails.ends(option, pos).stream().allMatch(end -> MountedRails.couldJoin(level, pos, end))) {
+				options.add(option);
+			}
+		}
+		if (options.size() <= 1) {
+			player.sendOverlayMessage(Component.literal("Only one way this rail can sit"));
+			return InteractionResult.SUCCESS;
+		}
+		BlockState next = options.get((options.indexOf(state) + 1) % options.size());
+		level.setBlock(pos, next, Block.UPDATE_ALL);
+		RailPins.pin(level, pos);
+		player.sendOverlayMessage(Component.literal("Rail set " + MountedRails.shapeName(next)
 			+ " (" + (options.indexOf(next) + 1) + " of " + options.size() + ")"));
 		return InteractionResult.SUCCESS;
 	}

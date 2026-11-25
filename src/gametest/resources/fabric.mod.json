@@ -2,13 +2,15 @@
 	"schemaVersion": 1,
 	"id": "minecart-mania-gametest",
 	"version": "1.0.0",
-	"name": "Minecart Mania smoke test",
-	"description": "Loads the mod, joins a world, and fails if anything on the way threw.",
+	"name": "Minecart Mania tests",
+	"description": "Loads the mod, joins a world, and lays track up a wall and over a ceiling.",
 	"license": "MIT",
 	"environment": "*",
 	"entrypoints": {
 		"fabric-client-gametest": [
-			"justfatlard.minecart_mania.gametest.SmokeTest"
+			"justfatlard.minecart_mania.gametest.SmokeTest",
+			"justfatlard.minecart_mania.gametest.MountedTrackLays",
+			"justfatlard.minecart_mania.gametest.MountedTrackPictured"
 		]
 	},
 	"depends": {

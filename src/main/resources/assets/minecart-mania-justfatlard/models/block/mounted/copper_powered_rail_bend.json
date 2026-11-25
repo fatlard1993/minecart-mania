@@ -1,0 +1,6 @@
+{
+  "parent": "minecart-mania-justfatlard:block/rail_bend",
+  "textures": {
+    "rail": "minecart-mania-justfatlard:block/copper_powered_rail"
+  }
+}

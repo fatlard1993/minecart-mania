@@ -1,0 +1,6 @@
+{
+  "parent": "minecart-mania-justfatlard:block/rail_bend",
+  "textures": {
+    "rail": "minecraft:block/powered_rail"
+  }
+}
