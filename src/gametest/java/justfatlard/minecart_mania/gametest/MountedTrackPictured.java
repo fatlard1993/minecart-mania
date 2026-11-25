@@ -38,10 +38,13 @@ public final class MountedTrackPictured implements FabricClientGameTest {
 			BlockPos base = server.computeOnServer(s -> Pictures.ground(s.overworld(),
 				connection.getServerPlayer().getBlockX(), connection.getServerPlayer().getBlockZ()));
 			server.runOnServer(s -> build(s.overworld(), base));
+			context.waitTicks(40);
 			Pictures.look(server, Vec3.atBottomCenterOf(base).add(7, 1.5, 8), Vec3.atBottomCenterOf(base).add(2, 2, 1));
 			System.out.println("[minecart-mania test] picture " + Pictures.shoot(context, connection, "mounted-track").toAbsolutePath());
 			Pictures.look(server, Vec3.atBottomCenterOf(base).add(-5, 1, 2.5), Vec3.atBottomCenterOf(base).add(0, 2, 1.5));
 			System.out.println("[minecart-mania test] picture " + Pictures.shoot(context, connection, "mounted-track-side").toAbsolutePath());
+			Pictures.look(server, Vec3.atBottomCenterOf(base).add(-3.5, 1.2, 2.5), Vec3.atBottomCenterOf(base).add(0, 2.4, 2.5));
+			System.out.println("[minecart-mania test] picture " + Pictures.shoot(context, connection, "mounted-track-hanging").toAbsolutePath());
 		}
 	}
 
@@ -52,6 +55,7 @@ public final class MountedTrackPictured implements FabricClientGameTest {
 			for (int dy = 0; dy <= 4; dy++) level.setBlockAndUpdate(base.offset(dx, dy, -1), Blocks.STONE.defaultBlockState());
 		}
 		for (int dz = 0; dz <= 4; dz++) level.setBlockAndUpdate(base.offset(0, 4, dz), Blocks.STONE.defaultBlockState());
+		level.setBlockAndUpdate(base.offset(-2, 0, 2), Blocks.SEA_LANTERN.defaultBlockState());
 
 		WallRailBlock wall = MountedRails.kindOf(Blocks.RAIL).wall();
 		CeilingRailBlock ceiling = MountedRails.kindOf(Blocks.RAIL).ceiling();
@@ -71,6 +75,23 @@ public final class MountedTrackPictured implements FabricClientGameTest {
 		level.setBlock(base.offset(3, 3, 0), wall(wall, WallTrack.DOWN_RIGHT), 2);
 		level.setBlock(base.offset(4, 3, 0), wall(wall, WallTrack.ALONG), 2);
 		level.setBlock(base.offset(5, 3, 0), wall(wall, WallTrack.ALONG), 2);
+
+		// A cart hanging under the ceiling with a rider, and one standing on the wall
+		var hanging = cart(level, new Vec3(base.getX() + 0.5, base.getY() + 3.2, base.getZ() + 2.5));
+		var zombie = net.minecraft.world.entity.EntityTypes.ZOMBIE.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+		zombie.setNoAi(true);
+		zombie.setPersistenceRequired();
+		zombie.snapTo(base.getX() + 0.5, base.getY() + 1, base.getZ() + 2.5, 0F, 0F);
+		level.addFreshEntity(zombie);
+		zombie.startRiding(hanging, true, true);
+		cart(level, new Vec3(base.getX() + 4.5, base.getY() + 3.15, base.getZ() + 0.45));
+	}
+
+	private static net.minecraft.world.entity.vehicle.minecart.AbstractMinecart cart(ServerLevel level, Vec3 at) {
+		var cart = net.minecraft.world.entity.EntityTypes.MINECART.create(level, net.minecraft.world.entity.EntitySpawnReason.COMMAND);
+		cart.snapTo(at.x, at.y, at.z, 0F, 0F);
+		level.addFreshEntity(cart);
+		return cart;
 	}
 
 	private static BlockState wall(WallRailBlock block, WallTrack track) {

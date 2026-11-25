@@ -7,6 +7,7 @@ import justfatlard.minecart_mania.rail.MountedRailBlock;
 import justfatlard.minecart_mania.rail.MountedRails;
 import justfatlard.minecart_mania.rail.Rails;
 import justfatlard.minecart_mania.rail.TrackPath;
+import justfatlard.pandorical.api.PandoricalApi;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -16,6 +17,9 @@ import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -64,15 +68,6 @@ public final class SurfaceRide {
 	public static Vec3 restingSpot(BlockState state, BlockPos pos) {
 		TrackPath path = ((MountedRailBlock) state.getBlock()).path(state).offset(pos);
 		return middleAt(path, 0.5).subtract(0, HALF_HEIGHT, 0);
-	}
-
-	/** Which way the top of a cart on mounted track faces, or null if it is not on any. */
-	public static @Nullable Vec3 up(AbstractMinecart cart) {
-		Ride ride = RIDES.get(cart.getUUID());
-		if (ride == null) return null;
-		BlockState state = cart.level().getBlockState(ride.block());
-		if (!(state.getBlock() instanceof MountedRailBlock mounted)) return null;
-		return mounted.path(state).up(ride.t());
 	}
 
 	/** Drive a cart already on mounted track for this tick; false if it is not on any. */
@@ -205,6 +200,7 @@ public final class SurfaceRide {
 			cart.noPhysics = false;
 			cart.setDeltaMovement(along.scale(Math.abs(speed)));
 			RIDES.remove(cart.getUUID());
+			PandoricalApi.entityOrientations().clear(cart);
 			if (behavior != null) addStep(behavior, cart, start);
 			return;
 		}
@@ -212,6 +208,7 @@ public final class SurfaceRide {
 		step(cart, behavior, path, t, start);
 		cart.setDeltaMovement(path.tangent(t).scale(direction * Math.abs(speed)));
 		face(cart, path.tangent(t).scale(direction));
+		PandoricalApi.entityOrientations().orient(cart, orientation(cart, path.tangent(t).scale(direction), path.up(t)));
 		cart.resetFallDistance();
 		cart.applyEffectsFromBlocks();
 		RIDES.put(cart.getUUID(), new Ride(block.immutable(), t));
@@ -232,6 +229,19 @@ public final class SurfaceRide {
 			behavior.lerpSteps.add(new NewMinecartBehavior.MinecartStep(cart.position(), cart.getDeltaMovement(),
 				cart.getYRot(), cart.getXRot(), weight));
 		}
+	}
+
+	/**
+	 * The cart turned to lie along the track with its top toward {@code up}. A cart's length runs
+	 * along x and vanilla draws it heading down -x, or +x once it has flipped, so the turn keeps
+	 * the end vanilla would draw in front, and nothing spins round where the cart comes back onto
+	 * a floor rail.
+	 */
+	private static Quaternionf orientation(AbstractMinecart cart, Vec3 heading, Vec3 up) {
+		Vector3f length = new Vector3f((float) heading.x, (float) heading.y, (float) heading.z).mul(cart.isFlipped() ? 1F : -1F);
+		Vector3f top = new Vector3f((float) up.x, (float) up.y, (float) up.z);
+		Vector3f side = new Vector3f(length).cross(top);
+		return new Matrix3f(length, top, side).getNormalizedRotation(new Quaternionf());
 	}
 
 	/** Yaw and pitch along the way it is going, for clients that draw a cart only by those two. */

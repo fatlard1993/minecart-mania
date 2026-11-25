@@ -22,7 +22,6 @@
     "RailMeetsWallMixin",
     "SurfaceRideMixin",
     "SurfaceCatchMixin",
-    "MountedSeatMixin",
     "CartOnMountedTrackMixin"
   ],
   "injectors": {

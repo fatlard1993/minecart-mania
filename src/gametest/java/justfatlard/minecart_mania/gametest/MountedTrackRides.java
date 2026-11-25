@@ -76,6 +76,17 @@ public final class MountedTrackRides implements FabricClientGameTest {
 				return "";
 			});
 			check(seat.isEmpty(), seat);
+			// The client is told how the cart is turned, and seats the rider where the server does
+			String onClient = session.context().computeOnClient(client -> {
+				var cart = client.level.getEntity(carts[2]);
+				if (cart == null) return "the client has no hanging cart";
+				if (justfatlard.pandorical.push.EntityOrientations.of(cart) == null) return "the client was not told the hanging cart is turned";
+				var rider = cart.getFirstPassenger();
+				if (rider == null) return "the client's hanging cart has no rider";
+				if (rider.getBoundingBox().maxY > hang.getY() + 1 + 1.0E-3) return "the client seats a rider under a ceiling with their head in it";
+				return "";
+			});
+			check(onClient.isEmpty(), onClient);
 			BlockPos lift = origin.offset(18, 0, 0);
 			check(at[3].y > lift.getY() + 3, "a powered climb did not lift a cart from rest: " + (at[3].y - lift.getY()));
 			BlockPos setDown = origin.offset(24, 0, 0);
