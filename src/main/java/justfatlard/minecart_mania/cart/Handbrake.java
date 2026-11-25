@@ -63,9 +63,12 @@ public final class Handbrake {
 		}
 		if (!pulled) return;
 
+		// On wall and ceiling track the motion is all along the track, up and down included; on the
+		// floor the up and down is vanilla's slope and falling, which the brake leaves alone.
 		Vec3 motion = cart.getDeltaMovement();
-		double speed = motion.horizontalDistance() * 20.0;
-		cart.setDeltaMovement(motion.x * DRAG, motion.y, motion.z * DRAG);
+		boolean mounted = SurfaceRide.isRiding(cart);
+		double speed = (mounted ? motion.length() : motion.horizontalDistance()) * 20.0;
+		cart.setDeltaMovement(mounted ? motion.scale(DRAG) : new Vec3(motion.x * DRAG, motion.y, motion.z * DRAG));
 		if (speed < SPARKS_ABOVE) return;
 
 		Vec3 pos = cart.position();

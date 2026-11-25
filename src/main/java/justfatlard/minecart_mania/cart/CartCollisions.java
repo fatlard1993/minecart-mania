@@ -27,7 +27,9 @@ public final class CartCollisions {
 	/** After vanilla has pushed: hurt what was in the way, and take the momentum back if fast enough. */
 	public static void afterPush(AbstractMinecart cart, Vec3 before) {
 		if (!(cart.level() instanceof ServerLevel level)) return;
-		double speed = before.horizontalDistance() * 20.0;
+		// Up a wall the speed is all up and down; on the floor that part is slope and falling.
+		boolean mounted = SurfaceRide.isRiding(cart);
+		double speed = (mounted ? before.length() : before.horizontalDistance()) * 20.0;
 		if (speed < HURTS_FROM) return;
 
 		AABB sweep = cart.getBoundingBox().inflate(0.3, 0.25, 0.3);
@@ -35,14 +37,14 @@ public final class CartCollisions {
 			e -> e.getVehicle() != cart && !e.isPassengerOfSameVehicle(cart) && e.isAlive());
 		if (struck.isEmpty()) return;
 
-		Vec3 heading = before.horizontal().normalize();
+		Vec3 heading = mounted ? before.normalize() : before.horizontal().normalize();
 		float damage = (float) ((speed - HURTS_FROM) * DAMAGE_PER_MPS);
 		double throwStrength = 0.4 + speed / 16.0;
 		for (LivingEntity target : struck) {
 			// The entity's own invulnerability window keeps a cart parked against a mob from
 			// hitting it every tick; a cart that stays at speed on top of something has passed it.
 			target.hurtServer(level, level.damageSources().generic(), damage);
-			target.push(heading.x * throwStrength, 0.35, heading.z * throwStrength);
+			target.push(heading.x * throwStrength, 0.35 + (mounted ? heading.y * throwStrength : 0), heading.z * throwStrength);
 		}
 		if (speed >= UNSTOPPABLE_FROM) {
 			cart.setDeltaMovement(before);

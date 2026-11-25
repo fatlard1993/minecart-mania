@@ -42,6 +42,7 @@ public final class MountedTrackRides implements FabricClientGameTest {
 					hang(level, origin.offset(12, 0, 0)),
 					lift(level, origin.offset(18, 0, 0)),
 					setDown(level, session.player(), origin.offset(24, 0, 0)),
+					furnace(level, origin.offset(30, 0, 0)),
 				};
 			});
 
@@ -49,13 +50,17 @@ public final class MountedTrackRides implements FabricClientGameTest {
 			boolean loopUnderCeiling = false;
 			boolean loopBackOnFloor = false;
 			double stallTop = Double.NEGATIVE_INFINITY;
-			for (int tick = 0; tick < 120; tick++) {
+			double furnaceLowLate = Double.POSITIVE_INFINITY;
+			double furnaceLowest = Double.POSITIVE_INFINITY;
+			for (int tick = 0; tick < 200; tick++) {
 				session.waitTicks(1);
 				Vec3[] at = ask(session, server -> positions(server.overworld(), carts));
 				loopTop = Math.max(loopTop, at[0].y);
 				if (at[0].y > origin.getY() + 2.5 && at[0].z > origin.getZ() + 1 && at[0].z < origin.getZ() + 4) loopUnderCeiling = true;
 				if (loopUnderCeiling && at[0].y < origin.getY() + 0.5) loopBackOnFloor = true;
 				stallTop = Math.max(stallTop, at[1].y);
+				if (tick >= 100) furnaceLowLate = Math.min(furnaceLowLate, at[5].y);
+				furnaceLowest = Math.min(furnaceLowest, at[5].y);
 			}
 
 			Vec3[] at = ask(session, server -> positions(server.overworld(), carts));
@@ -89,6 +94,10 @@ public final class MountedTrackRides implements FabricClientGameTest {
 			check(onClient.isEmpty(), onClient);
 			BlockPos lift = origin.offset(18, 0, 0);
 			check(at[3].y > lift.getY() + 3, "a powered climb did not lift a cart from rest: " + (at[3].y - lift.getY()));
+			BlockPos furnace = origin.offset(30, 0, 0);
+			// Up and held at the top, not swinging up the climb and back on the run it gets from the floor
+			check(furnaceLowest > furnace.getY() + 1.9, "a furnace cart set down at rest on a climb pushed itself down it first: lowest " + (furnaceLowest - furnace.getY()));
+			check(furnaceLowLate > furnace.getY() + 5, "a furnace cart at full throttle did not push itself up a wall and stay there: lowest late " + (furnaceLowLate - furnace.getY()));
 			BlockPos setDown = origin.offset(24, 0, 0);
 			check(Math.abs(at[4].y - (setDown.getY() + 0.2)) < 0.05, "a minecart set down on a ceiling rail did not hang there: " + (at[4].y - setDown.getY()));
 		});
@@ -156,6 +165,31 @@ public final class MountedTrackRides implements FabricClientGameTest {
 		level.addFreshEntity(pig);
 		check(pig.startRiding(level.getEntity(id), true, true), "the pig would not get in the cart");
 		return id;
+	}
+
+	/**
+	 * A lit furnace cart at full throttle, at rest two blocks up a six-block iron climb with a
+	 * dead end at the top: its push is a little more than gravity, so it should creep up the
+	 * wall on its own, with no run at it to carry it.
+	 */
+	private static int furnace(ServerLevel level, BlockPos o) {
+		clear(level, o, 8, 6);
+		WallRailBlock wall = MountedRails.kindOf(Blocks.RAIL).wall();
+		for (int dz = 0; dz <= 5; dz++) set(level, o.offset(0, -1, dz), Blocks.STONE.defaultBlockState());
+		for (int dy = 0; dy <= 6; dy++) set(level, o.offset(0, dy, -1), Blocks.STONE.defaultBlockState());
+		for (int dz = 1; dz <= 5; dz++) set(level, o.offset(0, 0, dz), Blocks.RAIL.defaultBlockState());
+		set(level, o, wall(wall, Direction.NORTH, WallTrack.FROM_FLOOR));
+		for (int dy = 1; dy <= 6; dy++) set(level, o.above(dy), wall(wall, Direction.NORTH, WallTrack.CLIMB));
+		var cart = EntityTypes.FURNACE_MINECART.create(level, EntitySpawnReason.COMMAND);
+		if (cart == null) throw new AssertionError("could not make a furnace cart");
+		Vec3 at = new Vec3(o.getX() + 0.5, o.getY() + 2.15, o.getZ() + 0.45);
+		cart.snapTo(at.x, at.y, at.z, 0F, 0F);
+		justfatlard.minecart_mania.cart.FurnaceControls.setHeading(cart, Direction.NORTH);
+		justfatlard.minecart_mania.cart.FurnaceControls.set(cart, new justfatlard.minecart_mania.cart.FurnaceControls.Settings(4, true, false));
+		((justfatlard.minecart_mania.cart.FurnaceFuel) cart).minecartMania$addFuel(3000);
+		cart.push = new Vec3(0, 0, -1);
+		level.addFreshEntity(cart);
+		return cart.getId();
 	}
 
 	/** A minecart item used on a ceiling rail, the way a player sets one down. */

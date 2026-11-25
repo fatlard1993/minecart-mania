@@ -33,6 +33,20 @@ Detector rails, activator rails, the crossing and the junction are iron and run 
 
 **Recipes give twice vanilla's count**: thirty-two rails, twelve each of powered, detector and activator rails, two carts. Wooden rails are thirty-two from planks around a stick; copper powered rails are twelve from waxed copper blocks around a stick and redstone. The crossing is four rails around an iron ingot; the junction is three rails over an ingot over a rail; each makes two.
 
+## Wall And Ceiling Track
+
+![Track from the floor up a wall and back under a ceiling, a cart hanging from it with a rider, and track along a wall turning up it](screenshots/mounted-track-side.png)
+
+**A rail held against a wall goes on the wall.** Looking up or down as you place it, it climbs; looking level, it runs along the wall. Held against the underside of a block it hangs from the ceiling, in any shape a floor rail takes. Held against another rail it is a floor rail as before, so a bridge still builds out from its last span.
+
+**Track bends from one face to the next.** A floor rail under the foot of a climb becomes the bend up onto the wall, and the top of a climb bends over onto a ceiling rail laid beside it. Along a wall, a rail turns up or down where it meets a climb. Shift-click steps a wall or ceiling rail through its shapes, as on the floor.
+
+**Carts ride all of it.** Up a climb a cart slows as it rises and rolls back down if it runs out of speed. Along a wall or a ceiling it neither slows nor speeds up, and under a ceiling it rides upside down, holding on at any speed. Floor, wall, ceiling and back down the far wall is a loop. A powered rail on a climb lifts a cart from a standstill, and an unpowered one holds a cart where it is. At the end of a line a cart stops, as at buffers. A cart can be set down on any of it, every rail runs at its own speed there, the handbrake works, and a furnace cart pushes along the track the way it was pushing when it got on.
+
+On a Pandorical client a cart is drawn upside down or on end, with its rider; the rider's view turns too, unless they switch that off in Pandorical's settings. A vanilla client sees the carts upright wherever they are.
+
+Wall and ceiling track comes in iron, powered, wooden and copper powered rail. Detector and activator rails, the crossing and the junction go on the floor only. Track bends inside a corner, from floor to wall and wall to ceiling: not over the outside edge of a block, and not round from one wall to another. Dropper and dispenser carts do their work on floor track.
+
 ## Carts
 
 **Speed hurts.** Above six metres a second a cart hurts and throws whatever stands in its way, harder the faster it goes, and past sixteen metres a second it keeps every bit of its momentum: a cart on a gold line does not notice a zombie.
@@ -59,11 +73,11 @@ Detector rails, activator rails, the crossing and the junction are iron and run 
 
 ## Standing On Rails
 
-A rail holds a player up. Every rail, floating or not: a flat one is two pixels of deck, a sloped one a ramp of eight steps, so a bridge of rail is a bridge you can walk across and a trestle is a thing you can stand on to build the next span. Only players: carts, mobs and dropped items pass through rails exactly as they do in vanilla, so nothing about how a cart rides changes. This needs Pandorical on the client, because a client has to predict the same floor the server holds you up with.
+A floor rail holds a player up, floating or not: a flat one is two pixels of deck, a sloped one a ramp of eight steps, so a bridge of rail is a bridge you can walk across and a trestle is a thing you can stand on to build the next span. Only players: carts, mobs and dropped items pass through rails exactly as they do in vanilla, so nothing about how a cart rides changes. This needs Pandorical on the client, because a client has to predict the same floor the server holds you up with.
 
 ## Pandorical
 
-Minecart Mania registers its rails and carts through Pandorical's content sync, draws the chain through it, takes the handbrake key from it, builds the furnace and working cart panels with it, and tells it rails are solid. **Pandorical is required on the server.**
+Minecart Mania registers its rails and carts through Pandorical's content sync, turns carts on wall and ceiling track through it, draws the chain through it, takes the handbrake key from it, builds the furnace and working cart panels with it, and tells it rails are solid. **Pandorical is required on the server.**
 
 **The Pandorical mod must be installed client-side** for the rails and carts to look like themselves, for the handbrake and the chain. Without it the mod still works server-side: rails run at their speeds, junctions switch, carts dig and lay and hurt, but a vanilla client sees untextured rails, an iron cart, and has no brake.
 

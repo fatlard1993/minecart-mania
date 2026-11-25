@@ -109,6 +109,7 @@ public final class FurnaceControls {
 			if (dir != null) cart.setAttached(PUSH_DIR, dir.scale(-1.0));
 			cart.push = cart.push.scale(-1.0);
 			cart.setDeltaMovement(cart.getDeltaMovement().scale(-1.0));
+			SurfaceRide.turnAround(cart);
 			return new Settings(s.level(), s.on(), !s.reversed());
 		}));
 		screens.onAction(SCREEN, "toggle", (player, data) -> with(player, (cart, s) -> new Settings(s.level(), !s.on(), s.reversed())));
@@ -327,11 +328,14 @@ public final class FurnaceControls {
 			return;
 		}
 		if (!hasFuel || cart.push.lengthSqr() < 1.0E-6) return;
-		Vec3 push = cart.push.normalize().scale(PUSH_PER_LEVEL * s.level());
+		// On wall and ceiling track it pushes along the track, the way it was pushing when it got
+		// on: its push points across the floor, which is no way at all up a wall.
+		Vec3 along = SurfaceRide.pushAlong(cart);
+		Vec3 push = (along != null ? along : cart.push.normalize()).scale(PUSH_PER_LEVEL * s.level());
 		Vec3 motion = cart.getDeltaMovement();
 		Vec3 next = motion.add(push);
 		double cap = maxSpeedFor(cart);
-		if (next.horizontalDistance() > cap) next = next.normalize().scale(cap);
+		if ((along != null ? next.length() : next.horizontalDistance()) > cap) next = next.normalize().scale(cap);
 		cart.setDeltaMovement(next);
 	}
 

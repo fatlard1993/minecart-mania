@@ -13,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
 import net.minecraft.world.entity.vehicle.minecart.NewMinecartBehavior;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -44,8 +45,11 @@ import org.jspecify.annotations.Nullable;
 public final class SurfaceRide {
 	private SurfaceRide() {}
 
-	/** Where along which block's path a cart is. */
-	private record Ride(BlockPos block, double t) {}
+	/**
+	 * Where along which block's path a cart is, and for a furnace cart which way along the path
+	 * it pushes: 1 toward the path's far end, -1 back toward its start.
+	 */
+	private record Ride(BlockPos block, double t, int push) {}
 
 	private static final Map<UUID, Ride> RIDES = new ConcurrentHashMap<>();
 
@@ -62,6 +66,36 @@ public final class SurfaceRide {
 
 	public static boolean isRiding(AbstractMinecart cart) {
 		return RIDES.containsKey(cart.getUUID());
+	}
+
+	/**
+	 * Which way along the track a furnace cart pushes. Where its push points along the track at
+	 * all, that; up a wall it points across the floor, which is no way, so it keeps the way it
+	 * had. A cart just taken on with neither pushes the way it is going, or uphill from a
+	 * standstill: at rest on a climb it has already picked up a tick of gravity, and taking that
+	 * for the way it was going drove it down the wall.
+	 */
+	private static int pushSense(MinecartFurnace furnace, Vec3 tangent, int had) {
+		double along = furnace.push.dot(tangent);
+		if (Math.abs(along) > 0.3) return along > 0 ? 1 : -1;
+		if (had != 0) return had;
+		double moving = furnace.getDeltaMovement().dot(tangent);
+		if (Math.abs(moving) > furnace.getGravity() + 0.01) return moving < 0 ? -1 : 1;
+		return tangent.y < 0 ? -1 : 1;
+	}
+
+	/** Which way a furnace cart on mounted track pushes, along the track; null off it. */
+	public static @Nullable Vec3 pushAlong(AbstractMinecart cart) {
+		Ride ride = RIDES.get(cart.getUUID());
+		if (ride == null || ride.push() == 0) return null;
+		BlockState state = cart.level().getBlockState(ride.block());
+		if (!(state.getBlock() instanceof MountedRailBlock mounted)) return null;
+		return mounted.path(state).offset(ride.block()).tangent(ride.t()).scale(ride.push());
+	}
+
+	/** The furnace's Turn around: on mounted track the push it keeps turns too. */
+	public static void turnAround(AbstractMinecart cart) {
+		RIDES.computeIfPresent(cart.getUUID(), (id, ride) -> new Ride(ride.block(), ride.t(), -ride.push()));
 	}
 
 	/** Where a cart set down on this block of mounted track stands: halfway along it. */
@@ -113,7 +147,7 @@ public final class SurfaceRide {
 				double t = i / 20.0;
 				double distance = middleAt(path, t).distanceToSqr(middle);
 				if (distance < bestDistance) {
-					best = new Ride(pos.immutable(), t);
+					best = new Ride(pos.immutable(), t, 0);
 					bestDistance = distance;
 				}
 			}
@@ -130,6 +164,7 @@ public final class SurfaceRide {
 		double t = ride.t();
 		BlockState state = level.getBlockState(block);
 		TrackPath path = ((MountedRailBlock) state.getBlock()).path(state).offset(block);
+		int push = cart instanceof MinecartFurnace furnace ? pushSense(furnace, path.tangent(t), ride.push()) : 0;
 
 		// The speed is the motion along the track: gravity, which vanilla has already added this
 		// tick, and whatever the cart's other systems did to it, less what points off the track.
@@ -176,6 +211,8 @@ public final class SurfaceRide {
 				start = cart.position();
 				TrackPath nextPath = mounted.path(nextState).offset(next);
 				boolean fromStart = nextPath.ends().getFirst().meets(end);
+				// The push carries on the same way along the track, whichever way the next block runs
+				if (push != 0 && path.tangent(t).dot(nextPath.tangent(fromStart ? 0 : 1)) < 0) push = -push;
 				block = next;
 				path = nextPath;
 				t = fromStart ? 0 : 1;
@@ -199,6 +236,12 @@ public final class SurfaceRide {
 			cart.move(MoverType.SELF, at.subtract(cart.position()));
 			cart.noPhysics = false;
 			cart.setDeltaMovement(along.scale(Math.abs(speed)));
+			if (cart instanceof MinecartFurnace furnace && push != 0) {
+				// Off onto the floor pushing the way it was pushing along the track, which after a
+				// climb and a ceiling may be nothing like the way it was pushing when it got on
+				Vec3 pushing = path.tangent(t).scale(push);
+				furnace.push = new Vec3(pushing.x, 0, pushing.z).normalize();
+			}
 			RIDES.remove(cart.getUUID());
 			PandoricalApi.entityOrientations().clear(cart);
 			if (behavior != null) addStep(behavior, cart, start);
@@ -211,7 +254,7 @@ public final class SurfaceRide {
 		PandoricalApi.entityOrientations().orient(cart, orientation(cart, path.tangent(t).scale(direction), path.up(t)));
 		cart.resetFallDistance();
 		cart.applyEffectsFromBlocks();
-		RIDES.put(cart.getUUID(), new Ride(block.immutable(), t));
+		RIDES.put(cart.getUUID(), new Ride(block.immutable(), t, push));
 	}
 
 	/** Put the cart at {@code t} along the path, pushing what it meets, and tell watching clients the way it went. */

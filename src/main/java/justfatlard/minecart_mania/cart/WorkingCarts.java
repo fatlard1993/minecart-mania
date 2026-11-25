@@ -260,6 +260,13 @@ public final class WorkingCarts {
 			chest.setCustomDisplayBlockState(Optional.of(dressing(work.kind())));
 		}
 
+		// Laying and throwing go by the floor: ahead, left and right of a cart on a wall or a
+		// ceiling are not where a floor rail or a mining charge belongs. The count starts again
+		// from where it comes back onto the floor.
+		if (SurfaceRide.isRiding(cart)) {
+			lastActed.remove(cart.getUUID());
+			return;
+		}
 		BlockPos here = cart.getCurrentBlockPosOrRailBelow();
 		BlockPos from = lastActed.putIfAbsent(cart.getUUID(), here);
 		if (from == null) return;
