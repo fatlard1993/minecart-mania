@@ -3,6 +3,13 @@
     "The railway made worth building: faster track that switches itself, a handbrake for the rider, carts chained into trains, and working carts that lay track and dig."
   ],
   "versions": {
+    "1.2.0": [
+      "Rails go on walls and ceilings. Held against a wall a rail climbs it if you look up or down as you place it, or runs along it if you look level; held against the underside of a block it hangs from the ceiling. Held against another rail it is still a floor rail, so bridges build as before.",
+      "A floor rail under the foot of a climb bends up onto the wall, and the top of a climb bends over onto a ceiling rail beside it, so floor, wall, ceiling and back down is a loop.",
+      "Carts ride all of it: slowing up a climb and rolling back if they run out of speed, upside down under a ceiling at any speed, and stopping at the end of a line. A powered rail on a climb lifts a cart from a standstill, and a minecart can be set down on wall or ceiling track.",
+      "On Pandorical clients carts on wall and ceiling track are drawn upside down or on end with their riders, and a rider's view turns too unless switched off in Pandorical's settings.",
+      "The handbrake works on wall and ceiling track, a furnace cart pushes itself up a wall at full throttle, and dropper and dispenser carts wait for the floor to work."
+    ],
     "1.1.11": [
       "Describes itself in one short line of what it adds."
     ],
